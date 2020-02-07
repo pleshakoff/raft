@@ -1,7 +1,18 @@
 package com.raft.server.node;
 
-public interface NodeState {
+public interface Context {
+
+    Integer getId();
+
+    void setActive(Boolean active);
+
+    Boolean getActive();
+
     State getState();
+
+    void setState(State state);
+
+    Integer getVotedFor();
 
     Long getCurrentTerm();
 
@@ -15,13 +26,7 @@ public interface NodeState {
 
     void incLastApplied();
 
-    void setState(State state);
-
     void setVotedFor(Integer votedFor);
 
-    Integer getVotedFor();
-
-    Integer getVoteTime();
-
-    String getName();
+    Integer getElectionTimeout();
 }
