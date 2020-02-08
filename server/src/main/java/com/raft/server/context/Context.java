@@ -1,4 +1,6 @@
-package com.raft.server.node;
+package com.raft.server.context;
+
+import java.util.List;
 
 public interface Context {
 
@@ -29,4 +31,9 @@ public interface Context {
     void setVotedFor(Integer votedFor);
 
     Integer getElectionTimeout();
+
+    List<Peer> getPeers();
+
+    Integer getQuorum();
+
 }

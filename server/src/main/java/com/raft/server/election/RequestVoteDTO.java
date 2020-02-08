@@ -1,4 +1,4 @@
-package com.raft.server.vote;
+package com.raft.server.election;
 
 
 import lombok.Getter;

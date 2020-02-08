@@ -1,7 +1,6 @@
-package com.raft.server.node;
+package com.raft.server.context;
 
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;

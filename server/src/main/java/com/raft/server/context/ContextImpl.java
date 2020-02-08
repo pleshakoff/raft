@@ -1,20 +1,24 @@
-package com.raft.server.node;
+package com.raft.server.context;
 
 
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.raft.server.node.State.FOLLOWER;
+import static com.raft.server.context.State.FOLLOWER;
 
 @Component
 @Slf4j
-public class ContextImpl implements Context {
+@RequiredArgsConstructor
+class ContextImpl implements Context {
 
+   private final Peers peers;
 
    @Value("${raft.id}")
    @Getter
@@ -24,7 +28,7 @@ public class ContextImpl implements Context {
    @Getter
    Boolean active=true;
 
-   private State state = FOLLOWER; //TODO make persist
+   private volatile State state = FOLLOWER; //TODO make persist
    private AtomicLong currentTerm = new AtomicLong(0L);//TODO make persist
 
    @Setter
@@ -45,8 +49,11 @@ public class ContextImpl implements Context {
 
    @Override
    public void setState(State state) {
-      log.info("Peer #{} Get new state: {}",getId(),state);
-      this.state = state;
+      log.info("Peer #{} Set new state: {}",getId(),state);
+      synchronized(this)
+      {
+        this.state = state;
+      }
    }
 
    @Override
@@ -77,6 +84,17 @@ public class ContextImpl implements Context {
    @Override
    public void incLastApplied(){
       lastApplied.incrementAndGet();
-   };
+   }
 
+   @Override
+   public List<Peer> getPeers() {
+      return peers.getPeers();
+   }
+
+   @Override
+   public Integer getQuorum() {
+      return peers.getQuorum();
+   }
+
+   ;
 }

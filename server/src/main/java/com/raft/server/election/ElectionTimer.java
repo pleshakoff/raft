@@ -1,7 +1,7 @@
-package com.raft.server.vote;
+package com.raft.server.election;
 
 
-import com.raft.server.node.Context;
+import com.raft.server.context.Context;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,14 +12,15 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.raft.server.node.State.*;
+import static com.raft.server.context.State.*;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class VoteTimer {
+public class ElectionTimer {
 
     private final Context context;
+    private final ElectionService electionService;
     private final Timer timer = new Timer();
 
     @Getter
@@ -44,9 +45,8 @@ public class VoteTimer {
             //  log.info("{} Time to next vote {}", context.getId(),context.getElectionTimeout()-counter.get());
               if (counter.get()>= context.getElectionTimeout()&& !context.getState().equals(LEADER))
               {
-                  log.info("Peer #{} START VOTE", context.getId());
-                  context.setState(CANDIDATE);
                   counter.set(0);
+                  electionService.startElection();
               }
             }
         }, 0, 1000);

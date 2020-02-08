@@ -1,11 +1,12 @@
-package com.raft.server.node;
+package com.raft.server.context;
 
 
 import com.network.Service;
 import com.network.ServicesProps;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -14,10 +15,15 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-public class Peers {
+class Peers {
 
-    private final Context nodeState;
+    @Value("${raft.id}")
+    Integer id;
+
     private final ServicesProps servicesProps;
+
+    @Getter(AccessLevel.PACKAGE)
+    private Integer quorum;
 
     @Getter
     private List<Peer> peers = new ArrayList<>();
@@ -25,6 +31,7 @@ public class Peers {
     private void add(Integer id) {
         peers.add(new Peer(id));
     }
+
 
     public  Peer get(Integer id) {
         return peers.stream().
@@ -38,8 +45,10 @@ public class Peers {
         servicesProps.getServices().stream().
                 map(Service::getName).
                 map(Integer::parseInt).
-                filter(id -> !id.equals(nodeState.getId())).
+                filter(id -> !id.equals(this.id)).
                 forEach(this::add);
+
+        quorum = servicesProps.getServices().size()/2+1;
 
     }
 }

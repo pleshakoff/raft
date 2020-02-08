@@ -1,4 +1,4 @@
-package com.raft.server.node;
+package com.raft.server.context;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import java.util.List;
 
 
@@ -17,10 +16,9 @@ import java.util.List;
 @RequestMapping(value = "/node",produces = {MediaType.APPLICATION_JSON_VALUE})
 @Api(tags="Peer")
 @RequiredArgsConstructor
-public class PeerController {
+class ContextController {
 
     private final Context context;
-    private final Peers peers;
 
     @GetMapping
     @ApiOperation(value = "Get current peer state")
@@ -31,7 +29,7 @@ public class PeerController {
     @GetMapping("/peers")
     @ApiOperation(value = "Get list of others peers")
     public List<Peer> getMyGroups()  {
-        return peers.getPeers();
+        return context.getPeers();
     }
 
 
