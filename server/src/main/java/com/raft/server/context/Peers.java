@@ -23,7 +23,7 @@ class Peers {
     private final ServicesProps servicesProps;
 
     @Getter(AccessLevel.PACKAGE)
-    private Integer e;
+    private Integer quorum;
 
     @Getter
     private List<Peer> peers = new ArrayList<>();

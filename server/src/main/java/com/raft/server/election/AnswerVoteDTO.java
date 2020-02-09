@@ -1,12 +1,14 @@
 package com.raft.server.election;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.http.HttpStatus;
 
 @Getter
+@Setter
 class AnswerVoteDTO {
 
     private final Integer id;
@@ -15,7 +17,9 @@ class AnswerVoteDTO {
     private final HttpStatus statusCode;
 
     @JsonCreator
-    AnswerVoteDTO(Integer id, Long term, boolean voteGranted) {
+    AnswerVoteDTO(@JsonProperty("id") Integer id,
+                  @JsonProperty("term") Long term,
+                  @JsonProperty("voteGranted") boolean voteGranted) {
         this.id = id;
         this.term = term;
         this.voteGranted = voteGranted;

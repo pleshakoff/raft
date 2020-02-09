@@ -42,8 +42,9 @@ public class ElectionTimer {
             @Override
             public void run() {
               counter.incrementAndGet();
-            //  log.info("{} Time to next vote {}", context.getId(),context.getElectionTimeout()-counter.get());
-              if (counter.get()>= context.getElectionTimeout()&& !context.getState().equals(LEADER))
+              log.info("Peer #{}. Time to next vote {}", context.getId(),context.getElectionTimeout()-counter.get());
+
+                if (counter.get()>= context.getElectionTimeout()&& !context.getState().equals(LEADER))
               {
                   counter.set(0);
                   electionService.processElection();

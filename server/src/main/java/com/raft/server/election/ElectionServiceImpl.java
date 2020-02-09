@@ -27,40 +27,47 @@ import static org.springframework.http.HttpStatus.*;
 @Slf4j
 public class ElectionServiceImpl implements ElectionService {
 
+    private static final int VOTE_RETRY_DELAY = 2000;
     private final Context context;
     private final Http http;
 
     private CompletableFuture<AnswerVoteDTO> getVoteFromOnePeer(Integer id) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                log.info("Peer #{} Send vote request to {}", context.getId(),id);
+                log.info("Peer #{} Send vote request to {}", context.getId(), id);
                 ResponseEntity<AnswerVoteDTO> answerVoteDTOResponseEntity = http.callGet(id.toString(), AnswerVoteDTO.class, "election", "vote");
                 return Optional.ofNullable(answerVoteDTOResponseEntity.getBody()).
                         orElse(new AnswerVoteDTO(id, NO_CONTENT));
             } catch (HttpException e) {
-                log.info("Peer #{} Vote request error fo {}. Response status code {}", context.getId(),id,e.getStatusCode());
+                log.info("Peer #{} Vote request error for {}. Response status code {}", context.getId(), id, e.getStatusCode());
                 return new AnswerVoteDTO(id, e.getStatusCode());
+            } catch (Exception e) {
+                log.info("Peer #{} Vote request error for {}. {} ", context.getId(), id, e.getMessage());
+                return new AnswerVoteDTO(id, BAD_REQUEST);
             }
+
         });
     }
 
-   private List<AnswerVoteDTO> getVoteFromAllPeers(List<Integer> peers) {
-       log.info("Peer #{} Spread vote request. Peers count: {}",context.getId(), peers.size());
+    private List<AnswerVoteDTO> getVoteFromAllPeers(Long term, List<Integer> peers) {
+        log.info("Peer #{} Spread vote request. Term {}. Peers count: {}", context.getId(), term, peers.size());
         List<CompletableFuture<AnswerVoteDTO>> answerFutureList =
                 peers.stream()
-                .map(this::getVoteFromOnePeer)
-                .collect(Collectors.toList());
+                        .map(this::getVoteFromOnePeer)
+                        .collect(Collectors.toList());
 
-       return CompletableFuture.allOf(
-                answerFutureList.toArray(new CompletableFuture[0])
-        ).thenApply(v ->
-                answerFutureList.stream().map(CompletableFuture::join).collect(Collectors.toList())
-        ).join();
+        if (checkCurrentElectionStatus(term)) {
+            return CompletableFuture.allOf(
+                    answerFutureList.toArray(new CompletableFuture[0])
+            ).thenApply(v ->
+                    answerFutureList.stream().map(CompletableFuture::join).collect(Collectors.toList())
+            ).join();
+        } else
+            return new ArrayList<>();
     }
 
 
     @Override
-    @Async
     public void processElection() {
         log.info("Peer #{} Start election", context.getId());
 
@@ -69,44 +76,56 @@ public class ElectionServiceImpl implements ElectionService {
         context.setVotedFor(context.getId());
 
         List<Integer> peersIds = context.getPeers().stream().map(Peer::getId).collect(Collectors.toList());
-        long voteGrantedCount =  1L;
-        long voteRevokedCount =  0L;
+        long voteGrantedCount = 1L;
+        long voteRevokedCount = 0L;
 
         //while didn't get heartbeat from leader or new election started
-        while (term.equals(context.getCurrentTerm())&& context.getState().equals(CANDIDATE)){
-            List<AnswerVoteDTO> answers = getVoteFromAllPeers(peersIds);
+        while (checkCurrentElectionStatus(term)) {
+            List<AnswerVoteDTO> answers = getVoteFromAllPeers(term, peersIds);
+            peersIds = new ArrayList<>();
             for (AnswerVoteDTO voteDTO : answers) {
-                peersIds = new ArrayList<>();
                 if (voteDTO.getStatusCode().equals(OK)) {
                     if (voteDTO.isVoteGranted()) {
                         voteGrantedCount++;
                     } else
                         voteRevokedCount++;
-                }
-                else
-                  peersIds.add(voteDTO.getId());
+                } else
+                    peersIds.add(voteDTO.getId());
             }
             if (voteGrantedCount >= context.getQuorum()) {
                 winElection(term);
-            }
-            else
-            if (voteRevokedCount >= context.getQuorum()) {
+                return;
+            } else if (voteRevokedCount >= context.getQuorum()) {
                 loseElection(term);
+                return;
             }
+            delay();
         }
-        context.setState(FOLLOWER);
+    }
+
+    private void delay() {
+        try {
+            log.info("Peer #{} Preparing to retry vote request", context.getId());
+            Thread.sleep(VOTE_RETRY_DELAY);
+        } catch (InterruptedException e) {
+            log.error(e.getMessage(),e);
+        }
+    }
+
+    private boolean checkCurrentElectionStatus(Long term) {
+        return term.equals(context.getCurrentTerm()) && context.getState().equals(CANDIDATE);
     }
 
     @Override
     public void winElection(Long term) {
-        if (term.equals(context.getCurrentTerm())&& context.getState().equals(CANDIDATE))
+        if (checkCurrentElectionStatus(term))
             log.info("Peer #{} I have WON the election!", context.getId());
         context.setState(LEADER);
     }
 
     @Override
     public void loseElection(Long term) {
-        if (term.equals(context.getCurrentTerm())&& context.getState().equals(CANDIDATE))
+        if (checkCurrentElectionStatus(term))
             log.info("Peer #{} I have LOSE the election!", context.getId());
         context.setState(FOLLOWER);
     }
