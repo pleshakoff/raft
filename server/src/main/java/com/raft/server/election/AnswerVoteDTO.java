@@ -7,13 +7,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.http.HttpStatus;
 
+import javax.validation.constraints.NotNull;
+
 @Getter
 @Setter
 class AnswerVoteDTO {
 
+    @NotNull
     private final Integer id;
+    @NotNull
     private final Long term;
+    @NotNull
     private  final  boolean voteGranted;
+    @NotNull
     private final HttpStatus statusCode;
 
     @JsonCreator
