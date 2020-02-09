@@ -58,7 +58,7 @@ class ReplicationServiceImpl implements ReplicationService {
 
 
     private List<AnswerAppendDTO> sendAppendToAllPeers(List<Integer> peers) {
-        log.info("Peer #{} Spread append request. Peers count: {}", context.getId(),peers.size());
+        log.debug("Peer #{} Spread append request. Peers count: {}", context.getId(),peers.size());
         List<CompletableFuture<AnswerAppendDTO>> answerFutureList =
                 peers.stream()
                         .map(this::sendAppendForOnePeer)
@@ -77,7 +77,7 @@ class ReplicationServiceImpl implements ReplicationService {
         if (!context.getState().equals(LEADER) || !context.getActive()) {
             return;
         }
-        log.info("Peer #{} Sending append", context.getId());List<Integer> peersIds = context.getPeers().stream().map(Peer::getId).collect(Collectors.toList());
+        log.debug("Peer #{} Sending append", context.getId());List<Integer> peersIds = context.getPeers().stream().map(Peer::getId).collect(Collectors.toList());
         List<AnswerAppendDTO> answers = sendAppendToAllPeers(peersIds);
         for (AnswerAppendDTO answer : answers) {
             if (answer.getStatusCode().equals(OK)) {
