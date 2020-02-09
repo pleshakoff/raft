@@ -45,7 +45,7 @@ class ElectionTimerImpl implements ElectionTimer {
               counter.incrementAndGet();
               log.info("Peer #{}. Time to next vote {}", context.getId(),context.getElectionTimeout()-counter.get());
 
-                if (counter.get()>= context.getElectionTimeout()&& !context.getState().equals(LEADER))
+              if (counter.get()>= context.getElectionTimeout())
               {
                   counter.set(0);
                   electionService.processElection();
