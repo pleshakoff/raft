@@ -18,85 +18,96 @@ import static com.raft.server.context.State.FOLLOWER;
 @RequiredArgsConstructor
 class ContextImpl implements Context {
 
-   private final Peers peers;
+    private final Peers peers;
 
-   @Value("${raft.id}")
-   @Getter
-   Integer id;
+    @Value("${raft.id}")
+    @Getter
+    Integer id;
 
-   @Setter
-   @Getter
-   Boolean active=true;
+    @Setter
+    @Getter
+    Boolean active = true;
 
-   private volatile State state = FOLLOWER; //TODO make persist
-   private AtomicLong currentTerm = new AtomicLong(0L);//TODO make persist
+    private volatile State state = FOLLOWER;
+    private AtomicLong currentTerm = new AtomicLong(0L);//TODO make persist
 
-   @Setter
-   @Getter
-   private Integer votedFor = null;
+    @Setter
+    @Getter
+    private Integer votedFor = null;//TODO make persist
 
-   private AtomicLong commitIndex =  new AtomicLong(0L);
-   private AtomicLong lastApplied  =  new AtomicLong(0L);
+    private AtomicLong commitIndex = new AtomicLong(0L);
+    private AtomicLong lastApplied = new AtomicLong(0L);
 
-   @Value("${raft.election-timeout}")
-   @Getter
-   Integer electionTimeout;
+    @Value("${raft.election-timeout}")
+    @Getter
+    Integer electionTimeout;
 
-   @Override
-   public State getState() {
-      return state;
-   }
+    @Override
+    public State getState() {
+        return state;
+    }
 
-   @Override
-   public void setState(State state) {
-      log.info("Peer #{} Set new state: {}",getId(),state);
-      synchronized(this)
-      {
-        this.state = state;
-      }
-   }
+    @Override
+    public void setState(State state) {
+        log.info("Peer #{} Set new state: {}", getId(), state);
+        synchronized (this) {
+            this.state = state;
+        }
+    }
 
-   @Override
-   public Long getCurrentTerm() {
-      return currentTerm.get();
-   }
+    @Override
+    public Long getCurrentTerm() {
+        return currentTerm.get();
+    }
 
-   @Override
-   public Long incCurrentTerm(){
-      long l = currentTerm.incrementAndGet();
-      log.info("Peer #{} Term incremented: {}",getId(),currentTerm.get());
-      return l;
-   }
+    public boolean checkCurrentTerm(Long term) {
+        if (term > getCurrentTerm()) {
+            setState(FOLLOWER);
+            currentTerm.set(term);
+            log.info("Peer #{} Get term greater then current. The new term is {}", getId(),getCurrentTerm());
+            return false;
+        }
+        return true;
+    }
 
-   @Override
-   public Long getCommitIndex() {
-      return commitIndex.get();
-   }
+    @Override
+    public Long incCurrentTerm() {
+        long l = currentTerm.incrementAndGet();
+        log.info("Peer #{} Term incremented: {}", getId(), currentTerm.get());
+        return l;
+    }
 
-   @Override
-   public void incCommitIndex(){
-      commitIndex.incrementAndGet();
-   };
+    @Override
+    public Long getCommitIndex() {
+        return commitIndex.get();
+    }
 
-   @Override
-   public Long getLastApplied() {
-      return lastApplied.get();
-   }
+    @Override
+    public void incCommitIndex() {
+        commitIndex.incrementAndGet();
+    }
 
-   @Override
-   public void incLastApplied(){
-      lastApplied.incrementAndGet();
-   }
+    ;
 
-   @Override
-   public List<Peer> getPeers() {
-      return peers.getPeers();
-   }
+    @Override
+    public Long getLastApplied() {
+        return lastApplied.get();
+    }
 
-   @Override
-   public Integer getQuorum() {
-      return peers.getQuorum();
-   }
+    @Override
+    public void incLastApplied() {
+        lastApplied.incrementAndGet();
+    }
 
-   ;
+    @Override
+    public List<Peer> getPeers() {
+        return peers.getPeers();
+    }
+
+    @Override
+    public Integer getQuorum() {
+        return peers.getQuorum();
+    }
+
+    ;
 }

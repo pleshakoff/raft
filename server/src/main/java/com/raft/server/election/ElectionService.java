@@ -6,12 +6,5 @@ public interface ElectionService {
 
     @Async
     void processElection();
-
-    void winElection(Long term);
-
-    void loseElection(Long term);
-
-    void interruptElection();
-
-    void vote();
+    AnswerVoteDTO vote(RequestVoteDTO requestVoteDTO);
 }

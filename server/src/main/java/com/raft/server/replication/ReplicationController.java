@@ -23,17 +23,13 @@ class ReplicationController {
     private final ReplicationService replicationService;
 
     @PostMapping
-    @ApiOperation(value = "Get current peer state")
-    public AnswerAppendDTO getCurrentPeerState(@Valid @RequestBody RequestAppendDTO requestAppendDTO,
-                                               BindingResult bindingResult) throws BindException {
-
+    @ApiOperation(value = "Append to log")
+    public AnswerAppendDTO appendRequest(@Valid @RequestBody RequestAppendDTO requestAppendDTO,
+                                         BindingResult bindingResult) throws BindException {
         if (bindingResult.hasErrors()) {
             throw new BindException(bindingResult);
         }
         return replicationService.append(requestAppendDTO);
     }
-
-
-
 
 }

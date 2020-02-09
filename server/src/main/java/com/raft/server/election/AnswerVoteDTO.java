@@ -11,7 +11,7 @@ import javax.validation.constraints.NotNull;
 
 @Getter
 @Setter
-class AnswerVoteDTO {
+public class AnswerVoteDTO {
 
     @NotNull
     private final Integer id;

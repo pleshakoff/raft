@@ -18,6 +18,8 @@ public interface Context {
 
     Long getCurrentTerm();
 
+    boolean checkCurrentTerm(Long term);
+
     Long incCurrentTerm();
 
     Long getCommitIndex();

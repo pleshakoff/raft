@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 
 @RequiredArgsConstructor
 @Getter
-public class RequestVoteDTO {
+class RequestVoteDTO {
     @NotNull
     private final Long term;
     @NotNull
