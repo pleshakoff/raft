@@ -36,7 +36,7 @@ import static org.springframework.http.HttpStatus.*;
             try {
                 log.info("Peer #{} Send vote request to {}", context.getId(), id);
 
-                RequestVoteDTO requestVoteDTO = new RequestVoteDTO(term,id,context.getCommitIndex(),0L); //TODO Right log indexes
+                RequestVoteDTO requestVoteDTO = new RequestVoteDTO(term,context.getId(),context.getCommitIndex(),0L); //TODO Right log indexes
 
                 ResponseEntity<AnswerVoteDTO> response = http.callPost(id.toString(), AnswerVoteDTO.class, requestVoteDTO,"election", "vote");
 
@@ -73,7 +73,7 @@ import static org.springframework.http.HttpStatus.*;
 
     @Override
     public void processElection() {
-        if (context.getState().equals(LEADER)) {
+        if (context.getState().equals(LEADER) || !context.getActive()) {
             return;
         }
 
@@ -93,7 +93,7 @@ import static org.springframework.http.HttpStatus.*;
             peersIds = new ArrayList<>();
             for (AnswerVoteDTO answer : answers) {
                 if (answer.getStatusCode().equals(OK)) {
-                    if (!context.checkCurrentTerm(answer.getTerm())) {
+                    if (context.checkTermGreaterThenCurrent(answer.getTerm())) {
                         return;
                     }
                     if (answer.isVoteGranted()) {
@@ -146,19 +146,30 @@ import static org.springframework.http.HttpStatus.*;
 
     @Override
     public AnswerVoteDTO vote(RequestVoteDTO requestVoteDTO) {
-        log.info("Peer #{} Get vote request from {}", context.getId(),requestVoteDTO.getCandidateId() );
+        log.info("Peer #{} Get vote request from {} with term {}. Current term: {}. Voted for: {}", context.getId(),
+                requestVoteDTO.getCandidateId(),
+                requestVoteDTO.getTerm(),
+                context.getCurrentTerm(),
+                context.getVotedFor());
 
         if (!context.getActive())
             throw  new NotActiveException();
-        boolean voteGranted =
-                ((requestVoteDTO.getTerm() > context.getCurrentTerm())
-                        ||
-                 (requestVoteDTO.getTerm().equals(context.getCurrentTerm()) && context.getVotedFor() == null||context.getVotedFor().equals(requestVoteDTO.getCandidateId())))
-                        &&
-                       (0L<=requestVoteDTO.getLastLogTerm()&&context.getCommitIndex()<=requestVoteDTO.getLastLogIndex());
 
-        //TODO d candidate’s log is at least as up-to-date as receiver’s log, grant vote
-        context.checkCurrentTerm(requestVoteDTO.getTerm());
+        boolean voteGranted;
+        if (requestVoteDTO.getTerm() < context.getCurrentTerm())
+            return new AnswerVoteDTO(context.getId(),context.getCurrentTerm(),false);
+        else
+        if (requestVoteDTO.getTerm().equals(context.getCurrentTerm())) {
+            voteGranted = (context.getVotedFor() == null||context.getVotedFor().equals(requestVoteDTO.getCandidateId()));
+        }
+        else
+         voteGranted = context.checkTermGreaterThenCurrent(requestVoteDTO.getTerm());
+
+         //TODO check log
+         voteGranted = voteGranted &&
+                             (0L<=requestVoteDTO.getLastLogTerm()&&
+                              context.getCommitIndex()<=requestVoteDTO.getLastLogIndex());
+
         if (voteGranted) {
             context.setVotedFor(requestVoteDTO.getCandidateId());
             log.info("Peer #{} Give vote for {}", context.getId(),requestVoteDTO.getCandidateId() );

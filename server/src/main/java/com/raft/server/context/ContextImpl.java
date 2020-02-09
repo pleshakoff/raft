@@ -60,14 +60,21 @@ class ContextImpl implements Context {
         return currentTerm.get();
     }
 
-    public boolean checkCurrentTerm(Long term) {
+    @Override
+    public void setCurrentTerm(long currentTerm) {
+        this.currentTerm.set(currentTerm);
+        log.info("Peer #{} Set term to {}", getId(),getCurrentTerm());
+    }
+
+    public boolean checkTermGreaterThenCurrent(Long term) {
         if (term > getCurrentTerm()) {
+            log.info("Peer #{} Get term {} greater then current. The current term is {}", getId(),term,getCurrentTerm());
             setState(FOLLOWER);
-            currentTerm.set(term);
-            log.info("Peer #{} Get term greater then current. The new term is {}", getId(),getCurrentTerm());
-            return false;
+            setCurrentTerm(term);
+            setVotedFor(null);
+            return true;
         }
-        return true;
+        return false;
     }
 
     @Override

@@ -1,3 +1,4 @@
+
 server:
   servlet:
      context-path: /api/${raft.api.version}
@@ -39,3 +40,7 @@ spring:
   application.name: raft-server
   hateoas:
     use-hal-as-default-json-media-type: false
+
+logging:
+  level:
+     com.network.http.rest_template:  ERROR

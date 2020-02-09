@@ -18,7 +18,9 @@ public interface Context {
 
     Long getCurrentTerm();
 
-    boolean checkCurrentTerm(Long term);
+    void setCurrentTerm(long currentTerm);
+
+    boolean checkTermGreaterThenCurrent(Long term);
 
     Long incCurrentTerm();
 

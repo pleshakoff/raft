@@ -26,14 +26,16 @@ class ElectionTimerImpl implements ElectionTimer {
     @Getter
     private AtomicInteger counter = new AtomicInteger(0);
 
-    public int getTimeToNextVote(){
-        return context.getElectionTimeout()-counter.get();
+    public int getTimeToNextVote() {
+        return context.getElectionTimeout() - counter.get();
     }
 
     @Override
-    public void reset(){
+    public void reset() {
         counter.set(0);
-    };
+    }
+
+    ;
 
 
     @PostConstruct
@@ -42,22 +44,20 @@ class ElectionTimerImpl implements ElectionTimer {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-              counter.incrementAndGet();
-              log.info("Peer #{}. Time to next vote {}", context.getId(),context.getElectionTimeout()-counter.get());
+                if (context.getActive() && !context.getState().equals(LEADER)) {
 
-              if (counter.get()>= context.getElectionTimeout())
-              {
-                  counter.set(0);
-                  electionService.processElection();
-              }
+                    counter.incrementAndGet();
+                    log.info("Peer #{}. Time to next vote: {} sec", context.getId(), context.getElectionTimeout() - counter.get());
+                    if (counter.get() >= context.getElectionTimeout()) {
+                        counter.set(0);
+                        electionService.processElection();
+                    }
+                }else
+                    counter.set(0);
             }
         }, 0, 1000);
 
     }
-
-
-
-
 
 
 }

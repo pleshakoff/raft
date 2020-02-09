@@ -22,7 +22,7 @@ class ReplicationController {
 
     private final ReplicationService replicationService;
 
-    @PostMapping
+    @PostMapping("/append")
     @ApiOperation(value = "Append to log")
     public AnswerAppendDTO appendRequest(@Valid @RequestBody RequestAppendDTO requestAppendDTO,
                                          BindingResult bindingResult) throws BindException {
