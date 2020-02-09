@@ -46,7 +46,7 @@ public class ElectionTimer {
               if (counter.get()>= context.getElectionTimeout()&& !context.getState().equals(LEADER))
               {
                   counter.set(0);
-                  electionService.startElection();
+                  electionService.processElection();
               }
             }
         }, 0, 1000);

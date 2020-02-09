@@ -8,9 +8,10 @@ import lombok.Setter;
 
 @Getter
 @RequiredArgsConstructor
-class Peer {
+public class Peer {
 
     final Integer id;
+
     @Setter
     Long nextIndex=0L;
     @Setter

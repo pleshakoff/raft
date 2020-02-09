@@ -18,7 +18,7 @@ public interface Context {
 
     Long getCurrentTerm();
 
-    void incCurrentTerm();
+    Long incCurrentTerm();
 
     Long getCommitIndex();
 

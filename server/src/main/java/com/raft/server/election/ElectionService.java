@@ -5,7 +5,11 @@ import org.springframework.scheduling.annotation.Async;
 public interface ElectionService {
 
     @Async
-    void startElection();
+    void processElection();
+
+    void winElection(Long term);
+
+    void loseElection(Long term);
 
     void interruptElection();
 

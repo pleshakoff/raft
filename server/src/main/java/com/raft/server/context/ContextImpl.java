@@ -62,9 +62,11 @@ class ContextImpl implements Context {
    }
 
    @Override
-   public void incCurrentTerm(){
-      currentTerm.incrementAndGet();
-   };
+   public Long incCurrentTerm(){
+      long l = currentTerm.incrementAndGet();
+      log.info("Peer #{} Term incremented: {}",getId(),currentTerm.get());
+      return l;
+   }
 
    @Override
    public Long getCommitIndex() {
