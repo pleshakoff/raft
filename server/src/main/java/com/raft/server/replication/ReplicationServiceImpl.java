@@ -3,10 +3,9 @@ package com.raft.server.replication;
 
 import com.network.http.Http;
 import com.network.http.HttpException;
-import com.raft.server.context.Context;
+import com.raft.server.context.ContextDecorator;
 import com.raft.server.context.Peer;
 import com.raft.server.election.ElectionTimer;
-import com.raft.server.exceptions.NotActiveException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +25,7 @@ import static org.springframework.http.HttpStatus.*;
 class ReplicationServiceImpl implements ReplicationService {
 
 
-    private  final Context context;
+    private  final ContextDecorator context;
     private  final ElectionTimer electionTimer;
     private final Http http;
 
@@ -58,7 +57,7 @@ class ReplicationServiceImpl implements ReplicationService {
 
 
     private List<AnswerAppendDTO> sendAppendToAllPeers(List<Integer> peers) {
-        log.debug("Peer #{} Spread append request. Peers count: {}", context.getId(),peers.size());
+        log.debug("Peer #{} Spreading append request. Peers count: {}", context.getId(),peers.size());
         List<CompletableFuture<AnswerAppendDTO>> answerFutureList =
                 peers.stream()
                         .map(this::sendAppendForOnePeer)
@@ -74,19 +73,19 @@ class ReplicationServiceImpl implements ReplicationService {
 
     @Override
     public  void heartBeat(){
-        if (!context.getState().equals(LEADER) || !context.getActive()) {
-            return;
-        }
-        log.debug("Peer #{} Sending append", context.getId());List<Integer> peersIds = context.getPeers().stream().map(Peer::getId).collect(Collectors.toList());
+        log.debug("Peer #{} Sending heart beat", context.getId());List<Integer> peersIds = context.getPeers().stream().map(Peer::getId).collect(Collectors.toList());
         List<AnswerAppendDTO> answers = sendAppendToAllPeers(peersIds);
         for (AnswerAppendDTO answer : answers) {
             if (answer.getStatusCode().equals(OK)) {
-                if (!context.checkTermGreaterThenCurrent(answer.getTerm())) {
+                if (answer.getTerm() > context.getCurrentTerm()) {
+                    context.setTermGreaterThenCurrent(answer.getTerm());
                     return;
                 }
             }
         }
     }
+
+
 
     @Override
     public AnswerAppendDTO append(RequestAppendDTO requestAppendDTO) {

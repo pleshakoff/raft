@@ -1,7 +1,6 @@
 package com.raft.server.context;
 
 
-import com.raft.server.exceptions.NotActiveException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -9,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.raft.server.context.State.FOLLOWER;
@@ -19,7 +17,6 @@ import static com.raft.server.context.State.FOLLOWER;
 @RequiredArgsConstructor
 class ContextImpl implements Context {
 
-    private final Peers peers;
 
     @Value("${raft.id}")
     @Getter
@@ -30,7 +27,6 @@ class ContextImpl implements Context {
     Boolean active = true;
 
     private volatile State state = FOLLOWER;
-    private AtomicLong currentTerm = new AtomicLong(0L);//TODO make persist
 
     @Setter
     @Getter
@@ -49,12 +45,6 @@ class ContextImpl implements Context {
 
 
     @Override
-    public void cancelIfNotActive() {
-        if (!getActive())
-            throw  new NotActiveException();
-    }
-
-    @Override
     public State getState() {
         return state;
     }
@@ -65,35 +55,6 @@ class ContextImpl implements Context {
         synchronized (this) {
             this.state = state;
         }
-    }
-
-    @Override
-    public Long getCurrentTerm() {
-        return currentTerm.get();
-    }
-
-    @Override
-    public void setCurrentTerm(long currentTerm) {
-        this.currentTerm.set(currentTerm);
-        log.info("Peer #{} Set term to {}", getId(),getCurrentTerm());
-    }
-
-    public boolean checkTermGreaterThenCurrent(Long term) {
-        if (term > getCurrentTerm()) {
-            log.info("Peer #{} Get term {} greater then current. The current term is {}", getId(),term,getCurrentTerm());
-            setState(FOLLOWER);
-            setCurrentTerm(term);
-            setVotedFor(null);
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public Long incCurrentTerm() {
-        long l = currentTerm.incrementAndGet();
-        log.info("Peer #{} Term incremented: {}", getId(), currentTerm.get());
-        return l;
     }
 
     @Override
@@ -116,15 +77,4 @@ class ContextImpl implements Context {
         lastApplied.incrementAndGet();
     }
 
-    @Override
-    public List<Peer> getPeers() {
-        return peers.getPeers();
-    }
-
-    @Override
-    public Integer getQuorum() {
-        return peers.getQuorum();
-    }
-
-    ;
 }

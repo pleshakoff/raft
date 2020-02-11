@@ -1,7 +1,7 @@
 package com.raft.server.timer;
 
 
-import com.raft.server.context.Context;
+import com.raft.server.context.ContextDecorator;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -11,14 +11,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.raft.server.context.State.LEADER;
-
-
 
 @Slf4j
 public abstract class RaftTimer {
 
-    protected final Context context;
+    protected final ContextDecorator context;
     private final Timer timer = new Timer();
 
     abstract protected Integer getTimeout();
@@ -29,7 +26,7 @@ public abstract class RaftTimer {
     @Getter
     private AtomicInteger counter = new AtomicInteger(0);
 
-    protected RaftTimer(Context context) {
+    protected RaftTimer(ContextDecorator context) {
         this.context = context;
     }
 

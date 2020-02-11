@@ -1,12 +1,9 @@
 package com.raft.server.election;
 
 
-import com.raft.server.context.Context;
+import com.raft.server.context.ContextDecorator;
 import com.raft.server.timer.RaftTimer;
 import org.springframework.stereotype.Service;
-
-import javax.annotation.PostConstruct;
-import java.util.TimerTask;
 
 import static com.raft.server.context.State.*;
 
@@ -15,7 +12,7 @@ class ElectionTimerImpl extends RaftTimer implements ElectionTimer {
 
     private final ElectionService electionService;
 
-    protected ElectionTimerImpl(Context context, ElectionService electionService) {
+    protected ElectionTimerImpl(ContextDecorator context, ElectionService electionService) {
         super(context);
         this.electionService = electionService;
     }

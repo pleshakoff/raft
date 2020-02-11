@@ -1,12 +1,9 @@
 package com.raft.server.replication;
 
 
-import com.raft.server.context.Context;
+import com.raft.server.context.ContextDecorator;
 import com.raft.server.timer.RaftTimer;
 import org.springframework.stereotype.Service;
-
-import java.util.Timer;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.raft.server.context.State.LEADER;
 
@@ -16,7 +13,7 @@ class HeartBeatTimerImpl extends RaftTimer implements HeartBeatTimer  {
 
     private final ReplicationService replicationService;
 
-    protected HeartBeatTimerImpl(Context context, ReplicationService replicationService) {
+    protected HeartBeatTimerImpl(ContextDecorator context, ReplicationService replicationService) {
         super(context);
         this.replicationService = replicationService;
     }

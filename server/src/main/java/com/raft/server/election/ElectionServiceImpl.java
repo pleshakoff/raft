@@ -3,7 +3,7 @@ package com.raft.server.election;
 
 import com.network.http.Http;
 import com.network.http.HttpException;
-import com.raft.server.context.Context;
+import com.raft.server.context.ContextDecorator;
 import com.raft.server.context.Peer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,7 @@ import static org.springframework.http.HttpStatus.*;
  class ElectionServiceImpl implements ElectionService {
 
     private static final int VOTE_RETRY_DELAY = 2000;
-    private final Context context;
+    private final ContextDecorator context;
     private final Http http;
 
     private CompletableFuture<AnswerVoteDTO> getVoteFromOnePeer(Integer id,Long term) {
@@ -92,11 +92,13 @@ import static org.springframework.http.HttpStatus.*;
             peersIds = new ArrayList<>();
             for (AnswerVoteDTO answer : answers) {
                 if (answer.getStatusCode().equals(OK)) {
-                    if (context.checkTermGreaterThenCurrent(answer.getTerm())) {
+                    if (answer.getTerm()>context.getCurrentTerm()) {
+                        context.setTermGreaterThenCurrent(answer.getTerm());
                         return;
                     }
                     if (answer.isVoteGranted()) {
                         log.info("Peer #{} Vote granted from {}", context.getId(),answer.getId());
+                        context.getPeers().get(answer.getId());
                         voteGrantedCount++;
                     } else
                         log.info("Peer #{} Vote reovked from {}", context.getId(),answer.getId());
@@ -161,7 +163,11 @@ import static org.springframework.http.HttpStatus.*;
             voteGranted = (context.getVotedFor() == null||context.getVotedFor().equals(requestVoteDTO.getCandidateId()));
         }
         else
-         voteGranted = context.checkTermGreaterThenCurrent(requestVoteDTO.getTerm());
+        {
+              voteGranted = true;
+              context.setTermGreaterThenCurrent(requestVoteDTO.getTerm());
+        }
+
 
          //TODO check log
          voteGranted = voteGranted &&

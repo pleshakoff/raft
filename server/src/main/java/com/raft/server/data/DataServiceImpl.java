@@ -1,7 +1,7 @@
 package com.raft.server.data;
 
 
-import com.raft.server.context.Context;
+import com.raft.server.context.ContextDecorator;
 import com.raft.server.context.State;
 import com.raft.server.exceptions.NotLeaderException;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ class DataServiceImpl implements DataService {
 
     private final Storage storage;
     private final Log log;
-    private final Context context;
+    private final ContextDecorator context;
 
     @Override
     public String get(Long id) {

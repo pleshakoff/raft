@@ -1,6 +1,7 @@
 package com.raft.server.replication;
 
 
+import com.raft.server.data.Entry;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -14,14 +15,10 @@ class RequestAppendDTO {
     private final Long term;
     @NotNull
     private final Integer leaderId;
-    @NotNull
+
     private final Long prevLogIndex;
-    @NotNull
     private final Long prevLogTerm;
-
-    @NotNull
     private final Long leaderCommit;
-
-    // entries[] log entries to store
+    Entry entry;
 
 }

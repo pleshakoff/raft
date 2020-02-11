@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 
 @RequiredArgsConstructor
 @Getter
-class Entry {
+public class Entry {
 
     @NotNull
     private final Long key;

@@ -18,11 +18,11 @@ import java.util.List;
 @RequiredArgsConstructor
 class ContextController {
 
-    private final Context context;
+    private final ContextDecorator context;
 
     @GetMapping
     @ApiOperation(value = "Get current peer state")
-    public Context getCurrentPeerState()  {
+    public ContextDecorator getCurrentPeerState()  {
       return context;
     }
 
