@@ -1,14 +1,16 @@
-package com.raft.server.replication;
+package com.raft.server.replication.timer;
 
 
 import com.raft.server.context.ContextDecorator;
+import com.raft.server.replication.ReplicationService;
+import com.raft.server.replication.timer.HeartBeatTimer;
 import com.raft.server.timer.RaftTimer;
 import org.springframework.stereotype.Service;
 
 import static com.raft.server.context.State.LEADER;
 
 @Service
-class HeartBeatTimerImpl extends RaftTimer implements HeartBeatTimer  {
+class HeartBeatTimerImpl extends RaftTimer implements HeartBeatTimer {
 
 
     private final ReplicationService replicationService;
@@ -30,7 +32,7 @@ class HeartBeatTimerImpl extends RaftTimer implements HeartBeatTimer  {
 
     @Override
     protected Runnable getAction() {
-        return replicationService::heartBeat;
+        return replicationService::appendRequest;
     }
 
     @Override

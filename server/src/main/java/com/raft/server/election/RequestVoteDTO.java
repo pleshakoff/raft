@@ -17,7 +17,7 @@ class RequestVoteDTO {
     private final Integer candidateId;
 
     @NotNull
-    private final Long lastLogIndex;
+    private final Integer lastLogIndex;
 
     @NotNull
     private final Long lastLogTerm;

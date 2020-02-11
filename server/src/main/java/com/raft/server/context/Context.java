@@ -5,13 +5,13 @@ public interface Context {
 
     void setState(State state);
 
-    Long getCommitIndex();
+    Integer getCommitIndex();
 
-    void incCommitIndex();
+    void setCommitIndex(Integer commitIndex);
 
-    Long getLastApplied();
+    Integer getLastApplied();
 
-    void incLastApplied();
+    void setLastApplied(Integer lastApplied);
 
     void setActive(Boolean active);
 

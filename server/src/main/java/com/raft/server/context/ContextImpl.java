@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.raft.server.context.State.FOLLOWER;
 
@@ -32,8 +32,8 @@ class ContextImpl implements Context {
     @Getter
     private Integer votedFor = null;//TODO make persist
 
-    private AtomicLong commitIndex = new AtomicLong(0L);
-    private AtomicLong lastApplied = new AtomicLong(0L);
+    private AtomicInteger commitIndex = new AtomicInteger(0);
+    private AtomicInteger lastApplied = new AtomicInteger(0);
 
     @Value("${raft.election-timeout}")
     @Getter
@@ -58,23 +58,27 @@ class ContextImpl implements Context {
     }
 
     @Override
-    public Long getCommitIndex() {
+    public Integer getCommitIndex() {
         return commitIndex.get();
     }
 
     @Override
-    public void incCommitIndex() {
-        commitIndex.incrementAndGet();
+    public void setCommitIndex(Integer commitIndex) {
+        this.commitIndex.set(commitIndex);
+        log.info("Peer #{} New commit index: {}", getId(), this.commitIndex.get());
     }
 
     @Override
-    public Long getLastApplied() {
+    public Integer getLastApplied() {
         return lastApplied.get();
     }
 
     @Override
-    public void incLastApplied() {
-        lastApplied.incrementAndGet();
+    public void setLastApplied(Integer lastApplied) {
+        this.lastApplied.set(lastApplied);
+        log.info("Peer #{} New applied index: {}", getId(), this.lastApplied.get());
+
     }
+
 
 }

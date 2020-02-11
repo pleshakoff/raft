@@ -16,7 +16,7 @@ import static com.raft.server.data.OperationType.*;
 class DataServiceImpl implements DataService {
 
     private final Storage storage;
-    private final Log log;
+    private final OperationsLog operationsLog;
     private final ContextDecorator context;
 
     @Override
@@ -53,6 +53,6 @@ class DataServiceImpl implements DataService {
             throw new NotLeaderException();
         }
         Operation operation = new Operation(context.getCurrentTerm(), insert, entry);
-        log.append(operation);
+        operationsLog.append(operation);
     }
 }

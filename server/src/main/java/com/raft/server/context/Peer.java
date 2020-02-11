@@ -13,9 +13,11 @@ public class Peer {
     final Integer id;
 
     @Setter
-    Long nextIndex=0L;
+    Integer nextIndex=1;
+
     @Setter
-    Long matchIndex=0L;
+    Integer matchIndex=0;
+
     @Setter
     Boolean voteGranted=false;
 

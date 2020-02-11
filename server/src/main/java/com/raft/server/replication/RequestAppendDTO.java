@@ -2,6 +2,7 @@ package com.raft.server.replication;
 
 
 import com.raft.server.data.Entry;
+import com.raft.server.data.Operation;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -16,9 +17,9 @@ class RequestAppendDTO {
     @NotNull
     private final Integer leaderId;
 
-    private final Long prevLogIndex;
+    private final Integer prevLogIndex;
     private final Long prevLogTerm;
-    private final Long leaderCommit;
-    Entry entry;
+    private final Integer leaderCommit;
+    private final Operation operation;
 
 }

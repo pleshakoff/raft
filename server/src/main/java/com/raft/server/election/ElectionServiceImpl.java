@@ -5,6 +5,7 @@ import com.network.http.Http;
 import com.network.http.HttpException;
 import com.raft.server.context.ContextDecorator;
 import com.raft.server.context.Peer;
+import com.raft.server.data.OperationsLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -22,11 +23,13 @@ import static org.springframework.http.HttpStatus.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
- class ElectionServiceImpl implements ElectionService {
+class ElectionServiceImpl implements ElectionService {
 
     private static final int VOTE_RETRY_DELAY = 2000;
     private final ContextDecorator context;
     private final Http http;
+    private final OperationsLog operationsLog;
+
 
     private CompletableFuture<AnswerVoteDTO> getVoteFromOnePeer(Integer id,Long term) {
         return CompletableFuture.supplyAsync(() -> {
@@ -35,8 +38,9 @@ import static org.springframework.http.HttpStatus.*;
             try {
                 log.info("Peer #{} Send vote request to {}", context.getId(), id);
 
-                RequestVoteDTO requestVoteDTO = new RequestVoteDTO(term,context.getId(),context.getCommitIndex(),0L); //TODO Right log indexes
-
+                RequestVoteDTO requestVoteDTO = new RequestVoteDTO(term,context.getId(),
+                                                                   operationsLog.getLastIndex(),
+                                                                   operationsLog.getLastTerm());
                 ResponseEntity<AnswerVoteDTO> response = http.callPost(id.toString(), AnswerVoteDTO.class, requestVoteDTO,"election", "vote");
 
                 return Optional.ofNullable(response.getBody()).
@@ -53,7 +57,7 @@ import static org.springframework.http.HttpStatus.*;
     }
 
     private List<AnswerVoteDTO> getVoteFromAllPeers(Long term, List<Integer> peers) {
-        log.info("Peer #{} Spread vote request. Term {}. Peers count: {}", context.getId(), term, peers.size());
+        log.info("Peer #{} Forward vote request to peers. Term {}. Peers count: {}", context.getId(), term, peers.size());
         List<CompletableFuture<AnswerVoteDTO>> answerFutureList =
                 peers.stream()
                         .map(i -> getVoteFromOnePeer(i,term))
@@ -72,6 +76,7 @@ import static org.springframework.http.HttpStatus.*;
 
     @Override
     public void processElection() {
+        //Invoked by candidates to gather votes
         if (context.getState().equals(LEADER) || !context.getActive()) {
             return;
         }
@@ -93,12 +98,13 @@ import static org.springframework.http.HttpStatus.*;
             for (AnswerVoteDTO answer : answers) {
                 if (answer.getStatusCode().equals(OK)) {
                     if (answer.getTerm()>context.getCurrentTerm()) {
+                        //• If RPC request or response contains term T > currentTerm: set currentTerm = T, convert to follower (§5.1)
                         context.setTermGreaterThenCurrent(answer.getTerm());
                         return;
                     }
                     if (answer.isVoteGranted()) {
                         log.info("Peer #{} Vote granted from {}", context.getId(),answer.getId());
-                        context.getPeers().get(answer.getId());
+                        context.getPeer(answer.getId()).setVoteGranted(true);
                         voteGrantedCount++;
                     } else
                         log.info("Peer #{} Vote reovked from {}", context.getId(),answer.getId());
@@ -114,7 +120,7 @@ import static org.springframework.http.HttpStatus.*;
             } else if (voteRevokedCount >= context.getQuorum()) {
                 loseElection(term);
                 return;
-            }
+            } //else retry
             delay();
         }
     }
@@ -136,50 +142,67 @@ import static org.springframework.http.HttpStatus.*;
         if (checkCurrentElectionStatus(term))
             log.info("Peer #{} I have WON the election! :)", context.getId());
         context.setState(LEADER);
+
+
+//        for each server, index of the next log entry  to send to that server
+//        (initialized to leader last log index + 1)
+          context.getPeers().forEach(peer ->
+                peer.setNextIndex(operationsLog.getLastIndex()+1)
+
+        );
+
     }
 
     private void loseElection(Long term) {
         if (checkCurrentElectionStatus(term))
             log.info("Peer #{} I have LOSE the election! :(", context.getId());
         context.setState(FOLLOWER);
+
     }
 
 
     @Override
-    public AnswerVoteDTO vote(RequestVoteDTO requestVoteDTO) {
+    public AnswerVoteDTO vote(RequestVoteDTO dto) {
         log.info("Peer #{} Get vote request from {} with term {}. Current term: {}. Voted for: {}", context.getId(),
-                requestVoteDTO.getCandidateId(),
-                requestVoteDTO.getTerm(),
+                dto.getCandidateId(),
+                dto.getTerm(),
                 context.getCurrentTerm(),
                 context.getVotedFor());
 
         context.cancelIfNotActive();
 
-        boolean voteGranted;
-        if (requestVoteDTO.getTerm() < context.getCurrentTerm())
+//        1. Reply false if term < currentTerm (§5.1)
+//        2. If votedFor is null or candidateId, and candidate’s log is at
+//        least as up-to-date as receiver’s log, grant vote (§5.2, §5.4)
+
+        boolean termCheck;
+        if (dto.getTerm() < context.getCurrentTerm())
             return new AnswerVoteDTO(context.getId(),context.getCurrentTerm(),false);
         else
-        if (requestVoteDTO.getTerm().equals(context.getCurrentTerm())) {
-            voteGranted = (context.getVotedFor() == null||context.getVotedFor().equals(requestVoteDTO.getCandidateId()));
+        if (dto.getTerm().equals(context.getCurrentTerm())) {
+            termCheck = (context.getVotedFor() == null||context.getVotedFor().equals(dto.getCandidateId()));
         }
         else
         {
-              voteGranted = true;
-              context.setTermGreaterThenCurrent(requestVoteDTO.getTerm());
+            //• If RPC request or response contains term T > currentTerm: set currentTerm = T, convert to follower (§5.1)
+            termCheck = true;
+              context.setTermGreaterThenCurrent(dto.getTerm());
         }
 
+        boolean logCheck = !((operationsLog.getLastTerm() > dto.getLastLogTerm()) ||
+                ((operationsLog.getLastTerm().equals(dto.getLastLogTerm())) &&
+                        (operationsLog.getLastIndex() > dto.getLastLogIndex())));
 
-         //TODO check log
-         voteGranted = voteGranted &&
-                             (0L<=requestVoteDTO.getLastLogTerm()&&
-                              context.getCommitIndex()<=requestVoteDTO.getLastLogIndex());
+
+        boolean voteGranted = termCheck&&logCheck;
 
         if (voteGranted) {
-            context.setVotedFor(requestVoteDTO.getCandidateId());
-            log.info("Peer #{} Give vote for {}", context.getId(),requestVoteDTO.getCandidateId() );
+            context.setVotedFor(dto.getCandidateId());
+            log.info("Peer #{} Give vote for {}", context.getId(),dto.getCandidateId() );
         }
         else {
-            log.info("Peer #{} Reject vote for {}", context.getId(),requestVoteDTO.getCandidateId() );
+            log.info("Peer #{} Reject vote for {} Current term {}, Candidate term {} ", context.getId(),dto.getCandidateId(),
+                    context.getCurrentTerm(),dto.getTerm());
         }
         return new AnswerVoteDTO(context.getId(),context.getCurrentTerm(),voteGranted);
     }

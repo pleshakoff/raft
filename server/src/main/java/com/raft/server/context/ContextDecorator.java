@@ -26,22 +26,25 @@ public interface ContextDecorator {
 
     Long getCurrentTerm();
 
-    Long getCommitIndex();
+    Integer getCommitIndex();
 
-    void incCommitIndex();
+    void setCommitIndex(Integer commitIndex);
 
-    Long getLastApplied();
+    Integer getLastApplied();
 
-    void incLastApplied();
+    void setLastApplied(Integer lastApplied);
 
     Integer getElectionTimeout();
     Integer getHeartBeatTimeout();
 
     List<Peer> getPeers();
+    Peer getPeer(Integer id);
 
     Long incCurrentTerm();
 
     void setCurrentTerm(Long term);
 
     void setTermGreaterThenCurrent(Long term);
+
+
 }

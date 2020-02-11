@@ -1,6 +1,8 @@
 package com.raft.server.context;
 
 
+import com.raft.server.data.Operation;
+import com.raft.server.data.OperationsLog;
 import com.raft.server.exceptions.NotActiveException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ class ContextDecoratorImpl implements ContextDecorator {
     private final Peers peers;
     private final Term term;
     private final Context context;
+    private final OperationsLog operationsLog;
 
 //    @Value("${raft.id}")
 //    @Getter
@@ -66,23 +69,23 @@ class ContextDecoratorImpl implements ContextDecorator {
     }
 
     @Override
-    public Long getCommitIndex() {
+    public Integer getCommitIndex() {
         return context.getCommitIndex();
     }
 
     @Override
-    public void incCommitIndex() {
-        context.incCommitIndex();
+    public void setCommitIndex(Integer commitIndex) {
+        context.setCommitIndex(commitIndex);
     }
 
     @Override
-    public Long getLastApplied() {
+    public Integer getLastApplied() {
         return context.getLastApplied();
     }
 
     @Override
-    public void incLastApplied() {
-        context.incLastApplied();
+    public void setLastApplied(Integer lastApplied) {
+        context.setLastApplied(lastApplied);
     }
 
     @Override
@@ -98,6 +101,11 @@ class ContextDecoratorImpl implements ContextDecorator {
     @Override
     public List<Peer> getPeers() {
         return peers.getPeers();
+    }
+
+    @Override
+    public Peer getPeer(Integer id)  {
+        return  peers.get(id);
     }
 
     @Override
@@ -126,13 +134,15 @@ class ContextDecoratorImpl implements ContextDecorator {
 
     @Override
     public Integer getVotedFor() {
-        return null;
+       return context.getVotedFor();
     }
 
     @Override
     public void setVotedFor(Integer votedFor) {
-
+        context.setVotedFor(votedFor);
     }
+
+
 
 
 }

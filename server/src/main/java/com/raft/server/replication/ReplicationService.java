@@ -1,12 +1,13 @@
 package com.raft.server.replication;
 
+import com.raft.server.data.Operation;
 import org.springframework.scheduling.annotation.Async;
 
-interface ReplicationService {
+public interface ReplicationService {
 
 
     @Async
-    void heartBeat();
+    void appendRequest();
 
     AnswerAppendDTO append(RequestAppendDTO requestAppendDTO);
 
