@@ -21,23 +21,31 @@ public class AnswerAppendDTO {
     private  final Boolean success;
 
     @NotNull
+    private  final Integer matchIndex;
+
+    @NotNull
     private final HttpStatus statusCode;
 
     @JsonCreator
     AnswerAppendDTO(
             @JsonProperty("id") Integer id,
             @JsonProperty("term") @NotNull Long term,
-            @JsonProperty("success") @NotNull Boolean success) {
+            @JsonProperty("success") @NotNull Boolean success,
+            @JsonProperty("matchIndex") Integer matchIndex)
+    {
         this.id = id;
         this.term = term;
         this.success = success;
+        this.matchIndex = matchIndex;
         this.statusCode = HttpStatus.OK;
     }
+
 
     AnswerAppendDTO(Integer id, @NotNull HttpStatus statusCode) {
         this.id = id;
         this.statusCode = statusCode;
         this.term = null;
         this.success = false;
+        matchIndex = null;
     }
 }

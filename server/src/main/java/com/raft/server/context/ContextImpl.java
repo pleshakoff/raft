@@ -30,7 +30,7 @@ class ContextImpl implements Context {
 
     @Setter
     @Getter
-    private Integer votedFor = null;//TODO make persist
+    private volatile Integer votedFor = null;//TODO make persist
 
     private AtomicInteger commitIndex = new AtomicInteger(0);
     private AtomicInteger lastApplied = new AtomicInteger(0);
@@ -42,7 +42,6 @@ class ContextImpl implements Context {
     @Value("${raft.heartbeat-timeout}")
     @Getter
     Integer heartBeatTimeout;
-
 
     @Override
     public State getState() {

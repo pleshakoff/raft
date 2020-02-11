@@ -1,18 +1,12 @@
 package com.raft.server.context;
 
 
-import com.raft.server.data.Operation;
-import com.raft.server.data.OperationsLog;
 import com.raft.server.exceptions.NotActiveException;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static com.raft.server.context.State.FOLLOWER;
 
@@ -24,12 +18,6 @@ class ContextDecoratorImpl implements ContextDecorator {
     private final Peers peers;
     private final Term term;
     private final Context context;
-    private final OperationsLog operationsLog;
-
-//    @Value("${raft.id}")
-//    @Getter
-//    Integer id;
-//
 
     @Override
     public Integer getId() {

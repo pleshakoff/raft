@@ -42,6 +42,8 @@ class ReplicationServiceImpl implements ReplicationService {
                 Peer peer = context.getPeer(id);
 
 
+                //• If last log index ≥ nextIndex for a follower: send
+                //AppendEntries RPC with log entries starting at nextIndex
                 Operation operation = (peer.getNextIndex() <= operationsLog.getLastIndex()) ? operationsLog.get(peer.getNextIndex()) : null;
 
                 RequestAppendDTO requestAppendDTO = new RequestAppendDTO(
@@ -96,6 +98,19 @@ class ReplicationServiceImpl implements ReplicationService {
                     context.setTermGreaterThenCurrent(answer.getTerm());
                     return;
                 }
+                Peer peer = context.getPeer(answer.getId());
+                if (answer.getSuccess()) {
+                    //If successful: update nextIndex and matchIndex for follower
+                    log.info("Peer #{} Get append success  from {}", context.getId(),answer.getId());
+                    peer.setNextIndex(answer.getMatchIndex()+1);
+                    peer.setMatchIndex(answer.getMatchIndex());
+                }
+                else
+                {
+                    //If AppendEntries fails because of log inconsistency:decrement nextIndex and retry
+                    log.info("Peer #{} Get append fault from {}", context.getId(),answer.getId());
+                    peer.decNextIndex();
+                }
             }
         }
     }
@@ -109,7 +124,7 @@ class ReplicationServiceImpl implements ReplicationService {
         // Reply false if term < currentTerm (§5.1)
         if (dto.getTerm() < context.getCurrentTerm()) {
             log.debug("Peer #{} Rejected append from {}. Term too small", context.getId(), dto.getLeaderId());
-            return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(), false);
+            return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(), false, null);
         } else if (dto.getTerm() > context.getCurrentTerm()) {
             //If RPC request or response contains term T > currentTerm: set currentTerm = T,
             context.setCurrentTerm(dto.getTerm());
@@ -126,7 +141,7 @@ class ReplicationServiceImpl implements ReplicationService {
         if (!dto.getPrevLogTerm().equals(operationsLog.getTerm(dto.getPrevLogIndex()))) {
             log.info("Peer #{} Rejected append from {}. Log doesn't contain prev term. Current term {}, Candidate term {} ",
                     context.getId(),dto.getLeaderId(),context.getCurrentTerm(),dto.getTerm());
-            return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(), false);
+            return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(), false, null);
         }
 
 
@@ -147,7 +162,7 @@ class ReplicationServiceImpl implements ReplicationService {
 //                min(leaderCommit, index of last new entry)
         if (dto.getLeaderCommit()>context.getCommitIndex())
             context.setCommitIndex(Math.min(dto.getLeaderCommit(),operationsLog.getLastIndex()));
-        return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(), true);
+        return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(), true, operationsLog.getLastIndex());
     }
 
 
