@@ -35,7 +35,13 @@ class OperationsLogInMemoryImpl implements OperationsLog {
 
     @Override
     public Long getLastTerm() {
-        return operationsLog.get(getLastIndex()).getTerm();
+
+        Integer lastIndex = getLastIndex();
+        if (lastIndex > -1) {
+            return operationsLog.get(lastIndex).getTerm();
+        }
+        else
+          return 0L;
     }
 
     @Override
