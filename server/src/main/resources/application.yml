@@ -7,6 +7,7 @@ raft:
   id: 1
   api:
     version: v1
+  heartbeat-timeout: 5
 
 network:
   services:

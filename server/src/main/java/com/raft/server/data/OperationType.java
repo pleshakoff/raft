@@ -1,4 +1,4 @@
-package com.raft.server.storage;
+package com.raft.server.data;
 
 public enum  OperationType {
 

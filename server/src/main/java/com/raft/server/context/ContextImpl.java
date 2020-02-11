@@ -1,6 +1,7 @@
 package com.raft.server.context;
 
 
+import com.raft.server.exceptions.NotActiveException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -41,6 +42,17 @@ class ContextImpl implements Context {
     @Value("${raft.election-timeout}")
     @Getter
     Integer electionTimeout;
+
+    @Value("${raft.heartbeat-timeout}")
+    @Getter
+    Integer heartBeatTimeout;
+
+
+    @Override
+    public void cancelIfNotActive() {
+        if (!getActive())
+            throw  new NotActiveException();
+    }
 
     @Override
     public State getState() {
@@ -93,8 +105,6 @@ class ContextImpl implements Context {
     public void incCommitIndex() {
         commitIndex.incrementAndGet();
     }
-
-    ;
 
     @Override
     public Long getLastApplied() {

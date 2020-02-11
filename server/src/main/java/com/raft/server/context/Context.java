@@ -2,19 +2,31 @@ package com.raft.server.context;
 
 import java.util.List;
 
+
+
 public interface Context {
 
     Integer getId();
+
 
     void setActive(Boolean active);
 
     Boolean getActive();
 
+    void cancelIfNotActive();
+
+
     State getState();
 
     void setState(State state);
 
+
+    Integer getQuorum();
+
     Integer getVotedFor();
+
+    void setVotedFor(Integer votedFor);
+
 
     Long getCurrentTerm();
 
@@ -24,6 +36,7 @@ public interface Context {
 
     Long incCurrentTerm();
 
+
     Long getCommitIndex();
 
     void incCommitIndex();
@@ -32,12 +45,9 @@ public interface Context {
 
     void incLastApplied();
 
-    void setVotedFor(Integer votedFor);
-
     Integer getElectionTimeout();
+    Integer getHeartBeatTimeout();
 
     List<Peer> getPeers();
-
-    Integer getQuorum();
 
 }

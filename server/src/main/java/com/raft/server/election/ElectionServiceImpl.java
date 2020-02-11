@@ -5,7 +5,6 @@ import com.network.http.Http;
 import com.network.http.HttpException;
 import com.raft.server.context.Context;
 import com.raft.server.context.Peer;
-import com.raft.server.exceptions.NotActiveException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -152,8 +151,7 @@ import static org.springframework.http.HttpStatus.*;
                 context.getCurrentTerm(),
                 context.getVotedFor());
 
-        if (!context.getActive())
-            throw  new NotActiveException();
+        context.cancelIfNotActive();
 
         boolean voteGranted;
         if (requestVoteDTO.getTerm() < context.getCurrentTerm())

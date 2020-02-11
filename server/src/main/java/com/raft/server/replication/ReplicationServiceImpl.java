@@ -73,7 +73,7 @@ class ReplicationServiceImpl implements ReplicationService {
 
 
     @Override
-    public  void sendAppendEntries(){
+    public  void heartBeat(){
         if (!context.getState().equals(LEADER) || !context.getActive()) {
             return;
         }
@@ -90,8 +90,8 @@ class ReplicationServiceImpl implements ReplicationService {
 
     @Override
     public AnswerAppendDTO append(RequestAppendDTO requestAppendDTO) {
-        if (!context.getActive())
-           throw  new NotActiveException();
+
+        context.cancelIfNotActive();
 
         if (requestAppendDTO.getTerm() < context.getCurrentTerm()) {
             return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(),false);

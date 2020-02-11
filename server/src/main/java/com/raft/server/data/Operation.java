@@ -1,4 +1,4 @@
-package com.raft.server.storage;
+package com.raft.server.data;
 
 
 import lombok.Getter;
@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public class Operation {
 
-    private final Long Id;
     private  final  Long term;
     private  final  OperationType type;
     private  final  Entry entry;
