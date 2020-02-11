@@ -1,5 +1,6 @@
-package com.raft.server.data;
+package com.raft.server.log;
 
+import com.raft.server.storage.Entry;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -16,22 +17,16 @@ import java.util.List;
 @RequestMapping(value = "/data",produces = {MediaType.APPLICATION_JSON_VALUE})
 @Api(tags="Data")
 @RequiredArgsConstructor
-class DataController {
+class LogController {
 
-    private final DataService dataService;
+    private final LogService logService;
 
-    @GetMapping("/{key}")
-    @ApiOperation(value = "Get value by key")
-    public String get(@PathVariable Long key){
-          return dataService.get(key);
-    }
 
     @GetMapping
-    @ApiOperation(value = "Get all list")
-    public List<Entry> all(){
-        return dataService.all();
+    @ApiOperation(value = "Get all log")
+    public List<Operation> all(){
+        return logService.all();
     }
-
 
     @PostMapping
     @ApiOperation(value = "Insert")
@@ -40,21 +35,33 @@ class DataController {
         if (bindingResult.hasErrors()) {
             throw new BindException(bindingResult);
         }
-        dataService.insert(entry);
+        logService.insert(entry);
         return "DONE";
     }
+
+    @PostMapping
+    @ApiOperation(value = "Sneaky insert")
+    public String sneakyInsert(@Valid @RequestBody Entry entry,
+                         BindingResult bindingResult) throws BindException {
+        if (bindingResult.hasErrors()) {
+            throw new BindException(bindingResult);
+        }
+        logService.sneakyInsert(entry);
+        return "DONE";
+    }
+
 
     @PutMapping("/{key}")
     @ApiOperation(value = "Update")
     public String insert(@PathVariable Long key,@RequestParam String val)  {
-        dataService.update(key,val);
+        logService.update(key,val);
         return "DONE";
     }
 
     @DeleteMapping("/{key}")
-    @ApiOperation(value = "Update")
+    @ApiOperation(value = "Delete")
     public String delete(@PathVariable Long key)  {
-        dataService.delete(key);
+        logService.delete(key);
         return "DONE";
     }
 

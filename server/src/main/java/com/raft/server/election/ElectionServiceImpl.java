@@ -5,7 +5,7 @@ import com.network.http.Http;
 import com.network.http.HttpException;
 import com.raft.server.context.ContextDecorator;
 import com.raft.server.context.Peer;
-import com.raft.server.data.OperationsLog;
+import com.raft.server.log.OperationsLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

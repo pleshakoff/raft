@@ -1,8 +1,10 @@
-package com.raft.server.data;
+package com.raft.server.storage;
+
+import com.raft.server.log.Operation;
 
 import java.util.List;
 
-public interface DataService {
+public interface StorageService {
 
     String get(Long id);
 
@@ -13,4 +15,8 @@ public interface DataService {
     void update(Long key, String val);
 
     void delete(Long key);
+
+    void sneakyInsert(Entry entry);
+
+    List<Operation> getLog();
 }

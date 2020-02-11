@@ -1,15 +1,16 @@
-package com.raft.server.data;
+package com.raft.server.log;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
 @Slf4j
-public class OperationsLogInMemoryImpl implements OperationsLog {
+class OperationsLogInMemoryImpl implements OperationsLog {
 
-    private List<Operation> operationsLog;
+    private List<Operation> operationsLog = new ArrayList<>();
 
     @Override
     public void append(Operation operation) {
@@ -19,6 +20,11 @@ public class OperationsLogInMemoryImpl implements OperationsLog {
     @Override
     public Operation get(Integer index) {
         return operationsLog.get(index);
+    }
+
+    @Override
+    public List<Operation> all() {
+        return operationsLog;
     }
 
     @Override

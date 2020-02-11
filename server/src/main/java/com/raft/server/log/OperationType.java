@@ -1,4 +1,4 @@
-package com.raft.server.data;
+package com.raft.server.log;
 
 public enum  OperationType {
 

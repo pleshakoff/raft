@@ -1,7 +1,6 @@
-package com.raft.server.data;
+package com.raft.server.storage;
 
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,20 +25,4 @@ class StorageInMemoryImpl implements Storage {
                 collect(Collectors.toList());
     }
 
-
-    @Override
-    public void insert(Long key, String val) {
-        map.put(key,val);
-    }
-
-    @Override
-    public void update(Long key, String val) {
-        map.put(key,val);
-    }
-
-    @Override
-    public void delete(Long key)
-    {
-        map.remove(key);
-    }
 }

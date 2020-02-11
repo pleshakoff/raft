@@ -78,12 +78,12 @@ class ContextDecoratorImpl implements ContextDecorator {
 
     @Override
     public Integer getElectionTimeout() {
-        return null;
+        return context.getElectionTimeout();
     }
 
     @Override
     public Integer getHeartBeatTimeout() {
-        return null;
+        return context.getHeartBeatTimeout();
     }
 
     @Override

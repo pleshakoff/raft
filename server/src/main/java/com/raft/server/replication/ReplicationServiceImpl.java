@@ -5,8 +5,8 @@ import com.network.http.Http;
 import com.network.http.HttpException;
 import com.raft.server.context.ContextDecorator;
 import com.raft.server.context.Peer;
-import com.raft.server.data.Operation;
-import com.raft.server.data.OperationsLog;
+import com.raft.server.log.Operation;
+import com.raft.server.log.OperationsLog;
 import com.raft.server.election.timer.ResetElectionTimerEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +14,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -40,7 +41,6 @@ class ReplicationServiceImpl implements ReplicationService {
                 log.info("Peer #{} Send append request to {}", context.getId(), id);
 
                 Peer peer = context.getPeer(id);
-
 
                 //• If last log index ≥ nextIndex for a follower: send
                 //AppendEntries RPC with log entries starting at nextIndex
@@ -90,26 +90,29 @@ class ReplicationServiceImpl implements ReplicationService {
     public void appendRequest() {
         log.debug("Peer #{} Sending append request", context.getId());
         List<Integer> peersIds = context.getPeers().stream().map(Peer::getId).collect(Collectors.toList());
-        List<AnswerAppendDTO> answers = sendAppendToAllPeers(peersIds);
-        for (AnswerAppendDTO answer : answers) {
-            if (answer.getStatusCode().equals(OK)) {
-                if (answer.getTerm() > context.getCurrentTerm()) {
-                    //• If RPC request or response contains term T > currentTerm: set currentTerm = T, convert to follower (§5.1)
-                    context.setTermGreaterThenCurrent(answer.getTerm());
-                    return;
-                }
-                Peer peer = context.getPeer(answer.getId());
-                if (answer.getSuccess()) {
-                    //If successful: update nextIndex and matchIndex for follower
-                    log.info("Peer #{} Get append success  from {}", context.getId(),answer.getId());
-                    peer.setNextIndex(answer.getMatchIndex()+1);
-                    peer.setMatchIndex(answer.getMatchIndex());
-                }
-                else
-                {
-                    //If AppendEntries fails because of log inconsistency:decrement nextIndex and retry
-                    log.info("Peer #{} Get append fault from {}", context.getId(),answer.getId());
-                    peer.decNextIndex();
+
+        while (peersIds.size()>0) {
+            peersIds = new ArrayList<>();
+            List<AnswerAppendDTO> answers = sendAppendToAllPeers(peersIds);
+            for (AnswerAppendDTO answer : answers) {
+                if (answer.getStatusCode().equals(OK)) {
+                    if (answer.getTerm() > context.getCurrentTerm()) {
+                        //• If RPC request or response contains term T > currentTerm: set currentTerm = T, convert to follower (§5.1)
+                        context.setTermGreaterThenCurrent(answer.getTerm());
+                        return;
+                    }
+                    Peer peer = context.getPeer(answer.getId());
+                    if (answer.getSuccess()) {
+                        //If successful: update nextIndex and matchIndex for follower
+                        log.info("Peer #{} Get append success  from {}", context.getId(), answer.getId());
+                        peer.setNextIndex(answer.getMatchIndex() + 1);
+                        peer.setMatchIndex(answer.getMatchIndex());
+                    } else {
+                        //If AppendEntries fails because of log inconsistency:decrement nextIndex and retry
+                        log.info("Peer #{} Get append fault from {}", context.getId(), answer.getId());
+                        peer.decNextIndex();
+                        peersIds.add(answer.getId());
+                    }
                 }
             }
         }
@@ -140,7 +143,7 @@ class ReplicationServiceImpl implements ReplicationService {
 //        whose term matches prevLogTerm (§5.3)
         if (!dto.getPrevLogTerm().equals(operationsLog.getTerm(dto.getPrevLogIndex()))) {
             log.info("Peer #{} Rejected append from {}. Log doesn't contain prev term. Current term {}, Candidate term {} ",
-                    context.getId(),dto.getLeaderId(),context.getCurrentTerm(),dto.getTerm());
+                    context.getId(), dto.getLeaderId(), context.getCurrentTerm(), dto.getTerm());
             return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(), false, null);
         }
 
@@ -160,8 +163,8 @@ class ReplicationServiceImpl implements ReplicationService {
 
 //        5. If leaderCommit > commitIndex, set commitIndex =
 //                min(leaderCommit, index of last new entry)
-        if (dto.getLeaderCommit()>context.getCommitIndex())
-            context.setCommitIndex(Math.min(dto.getLeaderCommit(),operationsLog.getLastIndex()));
+        if (dto.getLeaderCommit() > context.getCommitIndex())
+            context.setCommitIndex(Math.min(dto.getLeaderCommit(), operationsLog.getLastIndex()));
         return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(), true, operationsLog.getLastIndex());
     }
 
