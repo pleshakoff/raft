@@ -14,8 +14,8 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping(value = "/data",produces = {MediaType.APPLICATION_JSON_VALUE})
-@Api(tags="Data")
+@RequestMapping(value = "/log",produces = {MediaType.APPLICATION_JSON_VALUE})
+@Api(tags="Log")
 @RequiredArgsConstructor
 class LogController {
 
@@ -39,7 +39,7 @@ class LogController {
         return "DONE";
     }
 
-    @PostMapping
+    @PostMapping("/sneaky")
     @ApiOperation(value = "Sneaky insert")
     public String sneakyInsert(@Valid @RequestBody Entry entry,
                          BindingResult bindingResult) throws BindException {

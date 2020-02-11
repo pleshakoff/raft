@@ -29,7 +29,7 @@ class OperationsLogInMemoryImpl implements OperationsLog {
 
     @Override
     public Integer getLastIndex() {
-        return operationsLog.size()-2;
+        return operationsLog.size()-1;
 
     }
 

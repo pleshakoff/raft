@@ -49,7 +49,7 @@ class ElectionServiceImpl implements ElectionService {
                 log.info("Peer #{} Vote request error for {}. Response status code {}", context.getId(), id, e.getStatusCode());
                 return new AnswerVoteDTO(id, e.getStatusCode());
             } catch (Exception e) {
-                log.info("Peer #{} Vote request error for {}. {} ", context.getId(), id, e.getMessage());
+                log.info("Peer #{} Vote request error for {}. {} {} ", context.getId(), id,  e.getClass(), e.getMessage());
                 return new AnswerVoteDTO(id, BAD_REQUEST);
             }
 
