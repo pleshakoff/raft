@@ -10,10 +10,14 @@ import java.util.List;
 @Slf4j
 class OperationsLogInMemoryImpl implements OperationsLog {
 
+
+    private static Integer EMPTY_LOG_LAST_INDEX = -1;
+
+
     private List<Operation> operationsLog = new ArrayList<>();
 
     @Override
-    public void append(Operation operation) {
+    synchronized public void  append(Operation operation) {
        operationsLog.add(operation);
     }
 
@@ -37,7 +41,7 @@ class OperationsLogInMemoryImpl implements OperationsLog {
     public Long getLastTerm() {
 
         Integer lastIndex = getLastIndex();
-        if (lastIndex > -1) {
+        if (lastIndex > EMPTY_LOG_LAST_INDEX) {
             return operationsLog.get(lastIndex).getTerm();
         }
         else
@@ -45,7 +49,12 @@ class OperationsLogInMemoryImpl implements OperationsLog {
     }
 
     @Override
-    public void removeAllFromIndex(int index) {
+    public Boolean isEmpty() {
+        return getLastIndex().equals(EMPTY_LOG_LAST_INDEX);
+    }
+
+    @Override
+    synchronized public void removeAllFromIndex(int index) {
         log.info("Remove operations from log. From index {} to {}",index,operationsLog.size()-1);
 
         int delta = operationsLog.size()-index;
@@ -56,7 +65,11 @@ class OperationsLogInMemoryImpl implements OperationsLog {
 
     @Override
     public Long getTerm(Integer index) {
-       return operationsLog.get(index).getTerm();
+        if (index > EMPTY_LOG_LAST_INDEX) {
+            return operationsLog.get(index).getTerm();
+        }
+        else
+            return 0L;
     }
 
 

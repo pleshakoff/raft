@@ -30,7 +30,7 @@ class ReplicationServiceImpl implements ReplicationService {
 
 
     private final ContextDecorator context;
-    private ApplicationEventPublisher applicationEventPublisher;
+    private final ApplicationEventPublisher applicationEventPublisher;
     private final OperationsLog operationsLog;
     private final Http http;
 
@@ -38,13 +38,21 @@ class ReplicationServiceImpl implements ReplicationService {
     private CompletableFuture<AnswerAppendDTO> sendAppendForOnePeer(Integer id) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                log.info("Peer #{} Send append request to {}", context.getId(), id);
 
                 Peer peer = context.getPeer(id);
 
                 //• If last log index ≥ nextIndex for a follower: send
                 //AppendEntries RPC with log entries starting at nextIndex
-                Operation operation = (peer.getNextIndex() <= operationsLog.getLastIndex()) ? operationsLog.get(peer.getNextIndex()) : null;
+                Operation operation;
+                if (peer.getNextIndex() <= operationsLog.getLastIndex()) {
+                    operation = operationsLog.get(peer.getNextIndex());
+                    log.info("Peer #{} Send append request to {}. Peer next index: {}. Log last index:{} ", context.getId(), id,peer.getNextIndex(),operationsLog.getLastIndex());
+                }
+                else {
+                    operation = null;
+                    log.info("Peer #{} Send heartbeat to {}", context.getId(), id);
+                }
+
 
                 RequestAppendDTO requestAppendDTO = new RequestAppendDTO(
                         context.getCurrentTerm(),
@@ -63,7 +71,7 @@ class ReplicationServiceImpl implements ReplicationService {
                 log.info("Peer #{} Append request error for {}. Response status code {}", context.getId(), id, e.getStatusCode());
                 return new AnswerAppendDTO(id, e.getStatusCode());
             } catch (Exception e) {
-                log.info("Peer #{} Append request error for {}. {} ", context.getId(), id, e.getMessage());
+                log.info("Peer #{} Append request error for {}. {} {} ", context.getId(), id,e.getClass() ,e.getMessage());
                 return new AnswerAppendDTO(id, BAD_REQUEST);
             }
 
@@ -92,8 +100,8 @@ class ReplicationServiceImpl implements ReplicationService {
         List<Integer> peersIds = context.getPeers().stream().map(Peer::getId).collect(Collectors.toList());
 
         while (peersIds.size()>0) {
-            peersIds = new ArrayList<>();
             List<AnswerAppendDTO> answers = sendAppendToAllPeers(peersIds);
+            peersIds = new ArrayList<>();
             for (AnswerAppendDTO answer : answers) {
                 if (answer.getStatusCode().equals(OK)) {
                     if (answer.getTerm() > context.getCurrentTerm()) {
@@ -104,12 +112,18 @@ class ReplicationServiceImpl implements ReplicationService {
                     Peer peer = context.getPeer(answer.getId());
                     if (answer.getSuccess()) {
                         //If successful: update nextIndex and matchIndex for follower
-                        log.info("Peer #{} Get append success  from {}", context.getId(), answer.getId());
-                        peer.setNextIndex(answer.getMatchIndex() + 1);
-                        peer.setMatchIndex(answer.getMatchIndex());
+                        log.info("Peer #{} Get \"append success\"  from {}", context.getId(), answer.getId());
+//                        synchronized (this)
+                        {
+                        //    if (peer.getMatchIndex() < answer.getMatchIndex()) {
+                                log.debug("Peer #{} Set next index for {} Next: {} Match: {}. Old match:{}", context.getId(), answer.getId(),answer.getMatchIndex() + 1,answer.getMatchIndex(),peer.getMatchIndex());
+                                peer.setNextIndex(answer.getMatchIndex() + 1);
+                                peer.setMatchIndex(answer.getMatchIndex());
+                          //  }
+                        }
                     } else {
                         //If AppendEntries fails because of log inconsistency:decrement nextIndex and retry
-                        log.info("Peer #{} Get append fault from {}", context.getId(), answer.getId());
+                        log.info("Peer #{} Get append fault from {} and decrement current next index {} ", context.getId(), answer.getId(),peer.getNextIndex());
                         peer.decNextIndex();
                         peersIds.add(answer.getId());
                     }
@@ -151,20 +165,24 @@ class ReplicationServiceImpl implements ReplicationService {
 //        3. If an existing entry conflicts with a new one (same index
 //                but different terms), delete the existing entry and all that
 //        follow it (§5.3)
-        int newOperationIndex = dto.getPrevLogIndex() + 1;
-        if ((operationsLog.getLastIndex() <= newOperationIndex) &&
-                (!dto.getOperation().getTerm().equals(operationsLog.getTerm(newOperationIndex)))) {
-            operationsLog.removeAllFromIndex(newOperationIndex);
-        }
-
-
+        Operation newOperation = dto.getOperation();
+        if (newOperation !=null) {
+            int newOperationIndex = dto.getPrevLogIndex() + 1;
+            log.info("Peer #{} checking new operation. New index {}. Operation term: {}. Last index: {} ",
+                     context.getId(), newOperationIndex,newOperation.getTerm(), operationsLog.getLastIndex());
+            if ((newOperationIndex <= operationsLog.getLastIndex()) &&
+                 (!newOperation.getTerm().equals(operationsLog.getTerm(newOperationIndex)))) {
+                operationsLog.removeAllFromIndex(newOperationIndex);
+            }
 //        4. Append any new entries not already in the log
-        operationsLog.append(dto.getOperation());
-
+            operationsLog.append(newOperation);
+        }
 //        5. If leaderCommit > commitIndex, set commitIndex =
 //                min(leaderCommit, index of last new entry)
         if (dto.getLeaderCommit() > context.getCommitIndex())
             context.setCommitIndex(Math.min(dto.getLeaderCommit(), operationsLog.getLastIndex()));
+
+        log.debug("Peer #{}. Success answer to append request. Term: {}. Mach index {}",context.getId(),context.getCurrentTerm(),operationsLog.getLastIndex());
         return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(), true, operationsLog.getLastIndex());
     }
 

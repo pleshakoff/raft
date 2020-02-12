@@ -10,13 +10,5 @@ public interface StorageService {
 
     List<Entry> all();
 
-    void insert(Entry entry);
 
-    void update(Long key, String val);
-
-    void delete(Long key);
-
-    void sneakyInsert(Entry entry);
-
-    List<Operation> getLog();
 }

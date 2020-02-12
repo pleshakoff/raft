@@ -19,7 +19,6 @@ import static com.raft.server.log.OperationType.*;
 class StorageServiceImpl implements StorageService {
 
     private final Storage storage;
-    private final OperationsLog operationsLog;
     private final ContextDecorator context;
 
     @Override
@@ -35,38 +34,5 @@ class StorageServiceImpl implements StorageService {
     }
 
 
-    @Override
-    public void insert(Entry entry) {
-        appendToLog(INSERT, entry);
-    }
 
-    @Override
-    public void update(Long key, String val) {
-        appendToLog(UPDATE, new Entry(key, val));
-    }
-
-    @Override
-    public void delete(Long key) {
-        appendToLog(DELETE, new Entry(key, null));
-    }
-
-    @Override
-    public void sneakyInsert(Entry entry) {
-        Operation operation = new Operation(context.getCurrentTerm(), INSERT, entry);
-        operationsLog.append(operation);
-    }
-
-    @Override
-    public List<Operation> getLog() {
-        return operationsLog.all();
-    }
-
-    private void appendToLog(OperationType insert, Entry entry) {
-        context.cancelIfNotActive();
-        if (!context.getState().equals(State.LEADER)) {
-            throw new NotLeaderException();
-        }
-        Operation operation = new Operation(context.getCurrentTerm(), insert, entry);
-        operationsLog.append(operation);
-    }
 }

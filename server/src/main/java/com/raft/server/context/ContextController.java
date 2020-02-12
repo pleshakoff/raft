@@ -13,25 +13,18 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping(value = "/node",produces = {MediaType.APPLICATION_JSON_VALUE})
-@Api(tags="Peer")
+@RequestMapping(value = "/context",produces = {MediaType.APPLICATION_JSON_VALUE})
+@Api(tags="Context")
 @RequiredArgsConstructor
 class ContextController {
 
     private final ContextDecorator context;
 
     @GetMapping
-    @ApiOperation(value = "Get current peer state")
+    @ApiOperation(value = "Get current peer context attributes")
     public ContextDecorator getCurrentPeerState()  {
       return context;
     }
-
-    @GetMapping("/peers")
-    @ApiOperation(value = "Get list of others peers")
-    public List<Peer> getMyGroups()  {
-        return context.getPeers();
-    }
-
 
     @PostMapping("/stop")
     @ApiOperation(value = "Stop")

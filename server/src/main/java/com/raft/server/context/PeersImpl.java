@@ -41,7 +41,7 @@ class PeersImpl implements Peers {
     }
 
     @PostConstruct
-    void init() {
+     void init() {
         servicesProps.getServices().stream().
                 map(Service::getName).
                 map(Integer::parseInt).

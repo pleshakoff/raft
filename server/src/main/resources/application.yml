@@ -7,8 +7,7 @@ raft:
   id: 1
   api:
     version: v1
-  heartbeat-timeout: 5
-  append-retry: 5
+  heartbeat-timeout: 2
 
 network:
   services:
@@ -46,3 +45,6 @@ spring:
 logging:
   level:
      com.network.http.rest_template:  ERROR
+     com.raft.server.replication:  DEBUG
+     com.raft.server.election:  DEBUG
+     com.raft.server.timer.RaftTimer: DEBUG
