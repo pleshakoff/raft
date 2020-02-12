@@ -36,7 +36,7 @@ class StorageServiceImpl implements StorageService {
 
     @Override
     public void applyCommitted(){
-
+        log.debug("Peer #{} Trying to apply committed.LastApplied: {}, Commit Index: {} ", context.getId(), context.getLastApplied(),context.getCommitIndex());
         while (context.getLastApplied()<context.getCommitIndex())
         {
             apply(context.getCommitIndex());

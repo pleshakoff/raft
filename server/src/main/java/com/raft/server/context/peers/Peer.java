@@ -1,52 +1,19 @@
 package com.raft.server.context.peers;
 
+public interface Peer {
+    Integer getId();
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+    Integer getNextIndex();
 
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+    void setNextIndex(Integer nextIndex);
 
+    void decNextIndex();
 
-@RequiredArgsConstructor
-@Slf4j
-public class Peer {
+    Integer getMatchIndex();
 
-    final Integer id;
+    Boolean getVoteGranted();
 
-    private final AtomicInteger nextIndex= new AtomicInteger(1);
-    private final AtomicInteger matchIndex= new AtomicInteger(1);
-    private final AtomicBoolean voteGranted=new AtomicBoolean(false);
+    void setMatchIndex(Integer matchIndex);
 
-    public Integer getId() {
-        return this.id;
-    }
-
-    public Integer getNextIndex() {
-        return this.nextIndex.get();
-    }
-
-    public void setNextIndex(Integer nextIndex) {
-        this.nextIndex.set(nextIndex);
-    }
-
-    public void decNextIndex() {
-        this.nextIndex.decrementAndGet();
-    }
-
-    public Integer getMatchIndex() {
-        return this.matchIndex.get();
-    }
-
-    public Boolean getVoteGranted() {
-        return this.voteGranted.get();
-    }
-
-    public void setMatchIndex(Integer matchIndex) {
-        this.matchIndex.set(matchIndex);
-    }
-
-    public void setVoteGranted(Boolean voteGranted) {
-        this.voteGranted.set(voteGranted);
-    }
+    void setVoteGranted(Boolean voteGranted);
 }

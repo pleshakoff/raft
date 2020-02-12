@@ -46,7 +46,7 @@ public abstract class RaftTimer {
             public void run() {
                 if (isRun()) {
                     counter.incrementAndGet();
-                    log.debug("Peer #{}. Time to next {}: {} sec", context.getId(),getActionName(), getTimeout() - counter.get());
+                    log.debug("Peer #{} Time to next {}: {} sec", context.getId(),getActionName(), getTimeout() - counter.get());
                     if (counter.get() >= getTimeout()) {
                         counter.set(0);
                         getAction().run();

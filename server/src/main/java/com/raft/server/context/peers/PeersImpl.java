@@ -28,7 +28,7 @@ class PeersImpl implements Peers {
     private final List<Peer> peers = new ArrayList<>();
 
     private void add(Integer id) {
-        peers.add(new Peer(id));
+        peers.add(new PeerImpl(id));
     }
 
 

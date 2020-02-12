@@ -37,8 +37,8 @@ class ContextImpl implements Context {
     @Getter
     private volatile Integer votedFor = null;//TODO make persist
 
-    private final AtomicInteger commitIndex = new AtomicInteger(0);
-    private final AtomicInteger lastApplied = new AtomicInteger(0);
+    private final AtomicInteger commitIndex = new AtomicInteger(-1);
+    private final AtomicInteger lastApplied = new AtomicInteger(-1);
 
     @Value("${raft.election-timeout}")
     @Getter

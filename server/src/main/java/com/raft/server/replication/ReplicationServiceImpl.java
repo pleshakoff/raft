@@ -101,7 +101,7 @@ class ReplicationServiceImpl implements ReplicationService {
         log.debug("Peer #{} Sending request to peers", context.getId());
         List<Integer> peersIds = context.getPeers().stream().map(Peer::getId).collect(Collectors.toList());
 
-        while (peersIds.size()>0) {
+        while (peersIds.size()>0) {//retry until get success from all peers
             List<AnswerAppendDTO> answers = sendAppendToAllPeers(peersIds);
             peersIds = new ArrayList<>();
             for (AnswerAppendDTO answer : answers) {
@@ -118,7 +118,6 @@ class ReplicationServiceImpl implements ReplicationService {
                                 log.debug("Peer #{} Set next index for {} Next: {} Match: {}. Old match:{}", context.getId(), answer.getId(),answer.getMatchIndex() + 1,answer.getMatchIndex(),peer.getMatchIndex());
                                 peer.setNextIndex(answer.getMatchIndex() + 1);
                                 peer.setMatchIndex(answer.getMatchIndex());
-                                tryToCommit();
 
                     } else {
                         //If AppendEntries fails because of log inconsistency:decrement nextIndex and retry
@@ -128,6 +127,8 @@ class ReplicationServiceImpl implements ReplicationService {
                     }
                 }
             }
+            tryToCommit();
+
         }
     }
     
@@ -136,11 +137,15 @@ class ReplicationServiceImpl implements ReplicationService {
 //        of matchIndex[i] ≥ N, and log[N].term == currentTerm:
 //        set commitIndex = N (§5.3, §5.4).
 
+        log.debug("Peer #{} trying to commit log. Current commit index {}", context.getId(),context.getCommitIndex());
         while (true) {
             int N =  context.getCommitIndex()+1;
             long count = context.getPeers().stream().map(Peer::getMatchIndex).
-                    filter(matchIndex -> matchIndex >=N).count();
-            if (count>=context.getQuorum() && operationsLog.getTerm(N).equals(context.getCurrentTerm())){
+                    filter(matchIndex -> matchIndex >=N).count()+1;//followers plus leader
+            if (count>=context.getQuorum() &&
+                operationsLog.getLastIndex()>=N &&
+                operationsLog.getTerm(N).equals(context.getCurrentTerm()))
+            {
                 context.setCommitIndex(N);
             }
             else
