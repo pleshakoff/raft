@@ -163,13 +163,13 @@ class ElectionServiceImpl implements ElectionService {
 
     @Override
     public AnswerVoteDTO vote(RequestVoteDTO dto) {
+        context.cancelIfNotActive();
         log.info("Peer #{} Get vote request from {} with term {}. Current term: {}. Voted for: {}", context.getId(),
                 dto.getCandidateId(),
                 dto.getTerm(),
                 context.getCurrentTerm(),
                 context.getVotedFor());
 
-        context.cancelIfNotActive();
 
 //        1. Reply false if term < currentTerm (§5.1)
 //        2. If votedFor is null or candidateId, and candidate’s log is at

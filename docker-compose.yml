@@ -1,0 +1,41 @@
+version: "3"
+services:
+#################RAFT-CLIENT######################
+  raft-client:
+    image: pleshakoff/raft-client:1.0.0
+    ports:
+      - "8080:8080"
+    networks:
+      - app
+    environment:
+      - JVM_OPTS=-Xmx128m -Xms64m
+ #################RAFT-SERVER######################
+  raft-server-1:
+    image: pleshakoff/raft-server:1.0.0
+    ports:
+      - "8081:8081"
+    networks:
+      - app
+    environment:
+      - JVM_OPTS=-Xmx128m -Xms64m
+    command: --raft.election-timeout=10 --raft.id=1 --server.port=8081
+  raft-server-2:
+    image: pleshakoff/raft-server:1.0.0
+    ports:
+      - "8082:8082"
+    networks:
+      - app
+    environment:
+      - JVM_OPTS=-Xmx128m -Xms64m
+    command: --raft.election-timeout=15 --raft.id=2 --server.port=8082
+  raft-server-3:
+    image: pleshakoff/raft-server:1.0.0
+    ports:
+      - "8083:8083"
+    networks:
+      - app
+    environment:
+      - JVM_OPTS=-Xmx128m -Xms64m
+    command: --raft.election-timeout=30 --raft.id=3 --server.port=8083
+networks:
+  app:

@@ -1,5 +1,6 @@
 package com.raft.server.context.peers;
 
+
 public interface Peers {
 
     Peer get(Integer id);
