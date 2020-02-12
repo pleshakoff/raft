@@ -4,7 +4,6 @@ package com.raft.server.context;
 import com.raft.server.context.peers.Peer;
 import com.raft.server.context.peers.Peers;
 import com.raft.server.context.term.Term;
-import com.raft.server.exceptions.NotActiveException;
 import com.raft.server.log.OperationsLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +31,6 @@ class ContextDecoratorImpl implements ContextDecorator {
     @Override
     public void setActive(Boolean active) {
         context.setActive(active);
-
     }
 
     @Override
@@ -42,8 +40,7 @@ class ContextDecoratorImpl implements ContextDecorator {
 
     @Override
     public void cancelIfNotActive() {
-        if (!getActive())
-            throw  new NotActiveException();
+        context.cancelIfNotActive();
     }
 
     @Override
@@ -111,15 +108,6 @@ class ContextDecoratorImpl implements ContextDecorator {
         this.term.setCurrentTerm(term);
     }
 
-
-    @Override
-    public void setTermGreaterThenCurrent(Long term) {
-            log.info("Peer #{} Get term {} greater then current. The current term is {}", getId(),term,getCurrentTerm());
-            setState(FOLLOWER);
-            setCurrentTerm(term);
-            setVotedFor(null);
-    }
-
     @Override
     public Integer getLastIndexSize() {
         return operationsLog.getLastIndex();
@@ -139,6 +127,16 @@ class ContextDecoratorImpl implements ContextDecorator {
     public void setVotedFor(Integer votedFor) {
         context.setVotedFor(votedFor);
     }
+
+    @Override
+    public void setTermGreaterThenCurrent(Long term) {
+        log.info("Peer #{} Get term {} greater then current. The current term is {}", getId(),term,getCurrentTerm());
+        setState(FOLLOWER);
+        setCurrentTerm(term);
+        setVotedFor(null);
+    }
+
+
 
 
 

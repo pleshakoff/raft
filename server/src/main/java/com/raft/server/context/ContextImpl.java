@@ -1,6 +1,7 @@
 package com.raft.server.context;
 
 
+import com.raft.server.exceptions.NotActiveException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -81,6 +82,15 @@ class ContextImpl implements Context {
     public void incLastApplied() {
         log.info("Peer #{} New applied index: {}", getId(), this.lastApplied.incrementAndGet());
     }
+
+    @Override
+    public void cancelIfNotActive() {
+        if (!getActive())
+            throw  new NotActiveException();
+    }
+
+
+
 
 
 

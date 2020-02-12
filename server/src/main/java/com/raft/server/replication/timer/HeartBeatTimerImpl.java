@@ -1,7 +1,7 @@
 package com.raft.server.replication.timer;
 
 
-import com.raft.server.context.ContextDecorator;
+import com.raft.server.context.Context;
 import com.raft.server.replication.ReplicationService;
 import com.raft.server.replication.timer.HeartBeatTimer;
 import com.raft.server.timer.RaftTimer;
@@ -15,7 +15,7 @@ class HeartBeatTimerImpl extends RaftTimer implements HeartBeatTimer {
 
     private final ReplicationService replicationService;
 
-    protected HeartBeatTimerImpl(ContextDecorator context, ReplicationService replicationService) {
+    protected HeartBeatTimerImpl(Context context, ReplicationService replicationService) {
         super(context);
         this.replicationService = replicationService;
     }

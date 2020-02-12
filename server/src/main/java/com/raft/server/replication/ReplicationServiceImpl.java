@@ -29,11 +29,25 @@ import static org.springframework.http.HttpStatus.*;
 class ReplicationServiceImpl implements ReplicationService {
 
 
+    private final Http http;
     private final ContextDecorator context;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final OperationsLog operationsLog;
-    private final Http http;
 
+
+    private List<AnswerAppendDTO> sendAppendToAllPeers(List<Integer> peers) {
+        //log.debug("Peer #{} Forward request to peers. Peers count: {}", context.getId(), peers.size());
+        List<CompletableFuture<AnswerAppendDTO>> answerFutureList =
+                peers.stream()
+                        .map(this::sendAppendForOnePeer)
+                        .collect(Collectors.toList());
+
+        return CompletableFuture.allOf(
+                answerFutureList.toArray(new CompletableFuture[0])
+        ).thenApply(v ->
+                            answerFutureList.stream().map(CompletableFuture::join).collect(Collectors.toList())
+        ).join();
+    }
 
     private CompletableFuture<AnswerAppendDTO> sendAppendForOnePeer(Integer id) {
         return CompletableFuture.supplyAsync(() -> {
@@ -82,21 +96,6 @@ class ReplicationServiceImpl implements ReplicationService {
     }
 
 
-    private List<AnswerAppendDTO> sendAppendToAllPeers(List<Integer> peers) {
-        //log.debug("Peer #{} Forward request to peers. Peers count: {}", context.getId(), peers.size());
-        List<CompletableFuture<AnswerAppendDTO>> answerFutureList =
-                peers.stream()
-                        .map(this::sendAppendForOnePeer)
-                        .collect(Collectors.toList());
-
-        return CompletableFuture.allOf(
-                answerFutureList.toArray(new CompletableFuture[0])
-        ).thenApply(v ->
-                answerFutureList.stream().map(CompletableFuture::join).collect(Collectors.toList())
-        ).join();
-    }
-
-
     @Override
     public void appendRequest() {
         log.debug("Peer #{} Sending request to peers", context.getId());
@@ -116,14 +115,11 @@ class ReplicationServiceImpl implements ReplicationService {
                     if (answer.getSuccess()) {
                         //If successful: update nextIndex and matchIndex for follower
                         log.debug("Peer #{} Get \"request success\"  from {}", context.getId(), answer.getId());
-//                        synchronized (this)
-                        {
-                        //    if (peer.getMatchIndex() < answer.getMatchIndex()) {
                                 log.debug("Peer #{} Set next index for {} Next: {} Match: {}. Old match:{}", context.getId(), answer.getId(),answer.getMatchIndex() + 1,answer.getMatchIndex(),peer.getMatchIndex());
                                 peer.setNextIndex(answer.getMatchIndex() + 1);
                                 peer.setMatchIndex(answer.getMatchIndex());
-                          //  }
-                        }
+                                tryToCommit();
+
                     } else {
                         //If AppendEntries fails because of log inconsistency:decrement nextIndex and retry
                         log.debug("Peer #{} Get request fault from {} and decrement current next index {} ", context.getId(), answer.getId(),peer.getNextIndex());
@@ -134,6 +130,26 @@ class ReplicationServiceImpl implements ReplicationService {
             }
         }
     }
+    
+    private void  tryToCommit() {
+//        If there exists an N such that N > commitIndex, a majority
+//        of matchIndex[i] ≥ N, and log[N].term == currentTerm:
+//        set commitIndex = N (§5.3, §5.4).
+
+        while (true) {
+            int N =  context.getCommitIndex()+1;
+            long count = context.getPeers().stream().map(Peer::getMatchIndex).
+                    filter(matchIndex -> matchIndex >=N).count();
+            if (count>=context.getQuorum() && operationsLog.getTerm(N).equals(context.getCurrentTerm())){
+                context.setCommitIndex(N);
+            }
+            else
+              return;
+        }
+
+
+    }
+    
 
     @Override
     public AnswerAppendDTO append(RequestAppendDTO dto) {

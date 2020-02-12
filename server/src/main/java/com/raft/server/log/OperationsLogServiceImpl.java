@@ -1,8 +1,9 @@
 package com.raft.server.log;
 
 
-import com.raft.server.context.ContextDecorator;
+import com.raft.server.context.Context;
 import com.raft.server.context.State;
+import com.raft.server.context.term.Term;
 import com.raft.server.exceptions.NotLeaderException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -17,7 +18,8 @@ import static com.raft.server.log.OperationType.*;
 class OperationsLogServiceImpl implements OperationsLogService {
 
     private final OperationsLog operationsLog;
-    private final ContextDecorator context;
+    private final Context context;
+    private final Term term;
     private final ApplicationEventPublisher applicationEventPublisher;
 
 
@@ -38,7 +40,7 @@ class OperationsLogServiceImpl implements OperationsLogService {
 
     @Override
     public void sneakyInsert(Entry entry) {
-        Operation operation = new Operation(context.getCurrentTerm(), INSERT, entry);
+        Operation operation = new Operation(term.getCurrentTerm(), INSERT, entry);
         operationsLog.append(operation);
     }
 
@@ -52,7 +54,7 @@ class OperationsLogServiceImpl implements OperationsLogService {
         if (!context.getState().equals(State.LEADER)) {
             throw new NotLeaderException();
         }
-        Operation operation = new Operation(context.getCurrentTerm(), insert, entry);
+        Operation operation = new Operation(term.getCurrentTerm(), insert, entry);
         operationsLog.append(operation);
         applicationEventPublisher.publishEvent(new OperationsLogAppendedEvent(this));
     }

@@ -1,7 +1,7 @@
 package com.raft.server.storage;
 
 
-import com.raft.server.context.ContextDecorator;
+import com.raft.server.context.Context;
 import com.raft.server.log.Entry;
 import com.raft.server.log.Operation;
 import com.raft.server.log.OperationsLog;
@@ -19,7 +19,7 @@ import static com.raft.server.log.OperationType.INSERT;
 class StorageServiceImpl implements StorageService {
 
     private final Storage storage;
-    private final ContextDecorator context;
+    private final Context context;
     private final OperationsLog operationsLog;
 
     @Override

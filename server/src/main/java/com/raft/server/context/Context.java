@@ -26,4 +26,6 @@ public interface Context {
     Integer getElectionTimeout();
 
     Integer getHeartBeatTimeout();
+
+    void cancelIfNotActive();
 }

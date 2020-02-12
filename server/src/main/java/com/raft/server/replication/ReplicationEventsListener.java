@@ -2,7 +2,6 @@ package com.raft.server.replication;
 
 
 import com.raft.server.log.OperationsLogAppendedEvent;
-import com.raft.server.replication.timer.ResetHeartbeatTimerEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
