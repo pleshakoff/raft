@@ -1,5 +1,7 @@
 package com.raft.server.context;
 
+import com.raft.server.context.peers.Peer;
+
 import java.util.List;
 
 

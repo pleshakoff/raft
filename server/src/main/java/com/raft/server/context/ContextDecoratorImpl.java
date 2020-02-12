@@ -1,6 +1,9 @@
 package com.raft.server.context;
 
 
+import com.raft.server.context.peers.Peer;
+import com.raft.server.context.peers.Peers;
+import com.raft.server.context.term.Term;
 import com.raft.server.exceptions.NotActiveException;
 import com.raft.server.log.OperationsLog;
 import lombok.RequiredArgsConstructor;

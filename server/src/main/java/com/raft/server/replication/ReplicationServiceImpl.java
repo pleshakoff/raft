@@ -4,7 +4,7 @@ package com.raft.server.replication;
 import com.network.http.Http;
 import com.network.http.HttpException;
 import com.raft.server.context.ContextDecorator;
-import com.raft.server.context.Peer;
+import com.raft.server.context.peers.Peer;
 import com.raft.server.log.Operation;
 import com.raft.server.log.OperationsLog;
 import com.raft.server.election.timer.ResetElectionTimerEvent;
