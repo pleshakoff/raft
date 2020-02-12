@@ -107,7 +107,7 @@ class ElectionServiceImpl implements ElectionService {
                         context.getPeer(answer.getId()).setVoteGranted(true);
                         voteGrantedCount++;
                     } else
-                        log.info("Peer #{} Vote reovked from {}", context.getId(),answer.getId());
+                        log.info("Peer #{} Vote revoked from {}", context.getId(),answer.getId());
                         voteRevokedCount++;
                 } else {
                     log.info("Peer #{} No vote answer from {}", context.getId(),answer.getId());

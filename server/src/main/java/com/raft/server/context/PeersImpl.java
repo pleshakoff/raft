@@ -25,7 +25,7 @@ class PeersImpl implements Peers {
     private Integer quorum;
 
     @Getter
-    private List<Peer> peers = new ArrayList<>();
+    private final List<Peer> peers = new ArrayList<>();
 
     private void add(Integer id) {
         peers.add(new Peer(id));

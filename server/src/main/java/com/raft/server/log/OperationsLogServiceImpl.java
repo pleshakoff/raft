@@ -4,8 +4,6 @@ package com.raft.server.log;
 import com.raft.server.context.ContextDecorator;
 import com.raft.server.context.State;
 import com.raft.server.exceptions.NotLeaderException;
-import com.raft.server.replication.ReplicationService;
-import com.raft.server.storage.Entry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -16,11 +14,12 @@ import static com.raft.server.log.OperationType.*;
 
 @Service
 @RequiredArgsConstructor
-class LogServiceImpl implements LogService {
+class OperationsLogServiceImpl implements OperationsLogService {
 
     private final OperationsLog operationsLog;
     private final ContextDecorator context;
-    private final ReplicationService replicationService;
+    private final ApplicationEventPublisher applicationEventPublisher;
+
 
     @Override
     public void insert(Entry entry) {
@@ -55,7 +54,6 @@ class LogServiceImpl implements LogService {
         }
         Operation operation = new Operation(context.getCurrentTerm(), insert, entry);
         operationsLog.append(operation);
-        replicationService.appendRequest();
-
+        applicationEventPublisher.publishEvent(new OperationsLogAppendedEvent(this));
     }
 }

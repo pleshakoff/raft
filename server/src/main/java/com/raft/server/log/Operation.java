@@ -1,7 +1,6 @@
 package com.raft.server.log;
 
 
-import com.raft.server.storage.Entry;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

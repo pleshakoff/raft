@@ -1,6 +1,6 @@
 package com.raft.server.storage;
 
-import com.raft.server.log.Operation;
+import com.raft.server.log.Entry;
 
 import java.util.List;
 
@@ -11,4 +11,5 @@ public interface StorageService {
     List<Entry> all();
 
 
+    void applyCommitted();
 }

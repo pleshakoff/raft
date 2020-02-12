@@ -15,7 +15,7 @@ public class TermImpl implements Term {
     @Value("${raft.id}")
     Integer id;
 
-    private AtomicLong currentTerm = new AtomicLong(0L);
+    private final AtomicLong currentTerm = new AtomicLong(0L);
 
 
     @Override
@@ -32,8 +32,8 @@ public class TermImpl implements Term {
 
     @Override
     public Long incCurrentTerm() {
-        long l = currentTerm.incrementAndGet();
-        log.info("Peer #{} Term incremented: {}",id, currentTerm.get());
-        return l;
+        currentTerm.incrementAndGet();
+        log.info("Peer #{} Term incremented: {}",id, getCurrentTerm());
+        return getCurrentTerm();
     }
 }

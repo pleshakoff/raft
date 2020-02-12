@@ -12,7 +12,6 @@ public interface OperationsLog {
     Long getTerm(Integer index);
     Integer getLastIndex();
     Long getLastTerm();
-    Boolean isEmpty();
 
     void removeAllFromIndex(int newOperationIndex);
 }

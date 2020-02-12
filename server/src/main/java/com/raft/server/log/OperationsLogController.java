@@ -1,6 +1,5 @@
 package com.raft.server.log;
 
-import com.raft.server.storage.Entry;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
@@ -17,16 +16,16 @@ import java.util.List;
 @RequestMapping(value = "/log",produces = {MediaType.APPLICATION_JSON_VALUE})
 @Api(tags="Log")
 @RequiredArgsConstructor
-class LogController {
+class OperationsLogController {
 
-    public static final String DONE = "{\"result\": \"DONE\"}";
-    private final LogService logService;
+    private static final String DONE = "{\"result\": \"DONE\"}";
+    private final OperationsLogService operationsLogService;
 
 
     @GetMapping
     @ApiOperation(value = "Get all log")
     public List<Operation> all(){
-        return logService.all();
+        return operationsLogService.all();
     }
 
 
@@ -38,7 +37,7 @@ class LogController {
         if (bindingResult.hasErrors()) {
             throw new BindException(bindingResult);
         }
-        logService.insert(entry);
+        operationsLogService.insert(entry);
         return DONE;
     }
 
@@ -49,7 +48,7 @@ class LogController {
         if (bindingResult.hasErrors()) {
             throw new BindException(bindingResult);
         }
-        logService.sneakyInsert(entry);
+        operationsLogService.sneakyInsert(entry);
         return DONE;
     }
 
@@ -57,14 +56,14 @@ class LogController {
     @PutMapping("/{key}")
     @ApiOperation(value = "Update")
     public String insert(@PathVariable Long key,@RequestParam String val)  {
-        logService.update(key,val);
+        operationsLogService.update(key, val);
         return  DONE;
     }
 
     @DeleteMapping("/{key}")
     @ApiOperation(value = "Delete")
     public String delete(@PathVariable Long key)  {
-        logService.delete(key);
+        operationsLogService.delete(key);
         return  DONE;
     }
 

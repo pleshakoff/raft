@@ -74,8 +74,8 @@ class ContextDecoratorImpl implements ContextDecorator {
     }
 
     @Override
-    public void setLastApplied(Integer lastApplied) {
-        context.setLastApplied(lastApplied);
+    public void incLastApplied() {
+        context.incLastApplied();
     }
 
     @Override

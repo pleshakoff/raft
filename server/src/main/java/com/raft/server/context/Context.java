@@ -11,7 +11,7 @@ public interface Context {
 
     Integer getLastApplied();
 
-    void setLastApplied(Integer lastApplied);
+    void incLastApplied();
 
     void setActive(Boolean active);
 

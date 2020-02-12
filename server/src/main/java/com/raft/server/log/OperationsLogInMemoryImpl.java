@@ -11,10 +11,10 @@ import java.util.List;
 class OperationsLogInMemoryImpl implements OperationsLog {
 
 
-    private static Integer EMPTY_LOG_LAST_INDEX = -1;
+    private static final Integer EMPTY_LOG_LAST_INDEX = -1;
 
 
-    private List<Operation> operationsLog = new ArrayList<>();
+    private final List<Operation> operationsLog = new ArrayList<>();
 
     @Override
     synchronized public void  append(Operation operation) {
@@ -48,10 +48,6 @@ class OperationsLogInMemoryImpl implements OperationsLog {
           return 0L;
     }
 
-    @Override
-    public Boolean isEmpty() {
-        return getLastIndex().equals(EMPTY_LOG_LAST_INDEX);
-    }
 
     @Override
     synchronized public void removeAllFromIndex(int index) {

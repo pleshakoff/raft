@@ -32,7 +32,7 @@ public interface ContextDecorator {
 
     Integer getLastApplied();
 
-    void setLastApplied(Integer lastApplied);
+    void incLastApplied();
 
     Integer getElectionTimeout();
     Integer getHeartBeatTimeout();

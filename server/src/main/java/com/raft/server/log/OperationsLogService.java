@@ -1,11 +1,11 @@
 package com.raft.server.log;
 
-import com.raft.server.storage.Entry;
-
 import java.util.List;
 
-interface LogService {
+interface OperationsLogService {
 
+
+    List<Operation> all();
 
     void insert(Entry entry);
 
@@ -14,6 +14,4 @@ interface LogService {
     void delete(Long key);
 
     void sneakyInsert(Entry entry);
-
-    List<Operation> all();
 }

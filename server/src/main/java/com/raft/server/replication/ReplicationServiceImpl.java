@@ -37,7 +37,7 @@ class ReplicationServiceImpl implements ReplicationService {
 
     private CompletableFuture<AnswerAppendDTO> sendAppendForOnePeer(Integer id) {
         return CompletableFuture.supplyAsync(() -> {
-            String opNameForlog = "Heartbeat";
+            String opNameForLog = "Heartbeat";
             try {
 
                 Peer peer = context.getPeer(id);
@@ -46,14 +46,14 @@ class ReplicationServiceImpl implements ReplicationService {
                 //AppendEntries RPC with log entries starting at nextIndex
                 Operation operation;
                 if (peer.getNextIndex() <= operationsLog.getLastIndex()) {
-                    opNameForlog = "Append";
+                    opNameForLog = "Append";
                     operation = operationsLog.get(peer.getNextIndex());
                     log.info("Peer #{} {} request to {}. Peer next index: {}. Log last index:{} ",
-                             context.getId(),opNameForlog,id,peer.getNextIndex(),operationsLog.getLastIndex());
+                             context.getId(),opNameForLog,id,peer.getNextIndex(),operationsLog.getLastIndex());
                 }
                 else {
                     operation = null;
-                    log.info("Peer #{} {} request  to {}", context.getId(),opNameForlog,id);
+                    log.info("Peer #{} {} request  to {}", context.getId(),opNameForLog,id);
                 }
 
 
@@ -71,10 +71,10 @@ class ReplicationServiceImpl implements ReplicationService {
                 return Optional.ofNullable(response.getBody()).
                         orElse(new AnswerAppendDTO(id, NO_CONTENT));
             } catch (HttpException e) {
-                log.info("Peer #{} {} request error for {}. Response status code {}", context.getId(),opNameForlog, id, e.getStatusCode());
+                log.info("Peer #{} {} request error for {}. Response status code {}", context.getId(),opNameForLog, id, e.getStatusCode());
                 return new AnswerAppendDTO(id, e.getStatusCode());
             } catch (Exception e) {
-                log.info("Peer #{} {} request error for {}. {} {} ", context.getId(),opNameForlog,id,e.getClass() ,e.getMessage());
+                log.info("Peer #{} {} request error for {}. {} {} ", context.getId(),opNameForLog,id,e.getClass() ,e.getMessage());
                 return new AnswerAppendDTO(id, BAD_REQUEST);
             }
 
@@ -156,7 +156,7 @@ class ReplicationServiceImpl implements ReplicationService {
             context.setState(FOLLOWER);
         }
 
-//        2. Reply false if log doesn’t contain an entry at prevLogIndex
+//        2. Reply false if log does not contain an entry at prevLogIndex
 //        whose term matches prevLogTerm (§5.3)
         if ((dto.getPrevLogIndex()>operationsLog.getLastIndex())|| !dto.getPrevLogTerm().equals(operationsLog.getTerm(dto.getPrevLogIndex()))) {
             log.debug("Peer #{} Rejected opName from {}. Log doesn't contain prev term. Current term {}, Candidate term {} ",

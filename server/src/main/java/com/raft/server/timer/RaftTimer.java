@@ -24,16 +24,13 @@ public abstract class RaftTimer {
     abstract protected boolean isRun();
 
     @Getter
-    private AtomicInteger counter = new AtomicInteger(0);
+    private final AtomicInteger counter = new AtomicInteger(0);
 
     protected RaftTimer(ContextDecorator context) {
         this.context = context;
     }
 
 
-    public int getTimeToNextVote() {
-        return getTimeout() - counter.get();
-    }
 
     public void reset() {
         counter.set(0);
