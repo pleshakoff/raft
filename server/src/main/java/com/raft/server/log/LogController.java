@@ -19,6 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 class LogController {
 
+    public static final String DONE = "{\"result\": \"DONE\"}";
     private final LogService logService;
 
 
@@ -28,6 +29,8 @@ class LogController {
         return logService.all();
     }
 
+
+
     @PostMapping
     @ApiOperation(value = "Insert")
     public String insert(@Valid @RequestBody Entry entry,
@@ -36,7 +39,7 @@ class LogController {
             throw new BindException(bindingResult);
         }
         logService.insert(entry);
-        return "DONE";
+        return DONE;
     }
 
     @PostMapping("/sneaky")
@@ -47,7 +50,7 @@ class LogController {
             throw new BindException(bindingResult);
         }
         logService.sneakyInsert(entry);
-        return "DONE";
+        return DONE;
     }
 
 
@@ -55,14 +58,14 @@ class LogController {
     @ApiOperation(value = "Update")
     public String insert(@PathVariable Long key,@RequestParam String val)  {
         logService.update(key,val);
-        return "DONE";
+        return  DONE;
     }
 
     @DeleteMapping("/{key}")
     @ApiOperation(value = "Delete")
     public String delete(@PathVariable Long key)  {
         logService.delete(key);
-        return "DONE";
+        return  DONE;
     }
 
 

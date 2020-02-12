@@ -46,5 +46,5 @@ public interface ContextDecorator {
 
     void setTermGreaterThenCurrent(Long term);
 
-
+    Integer getLastIndexSize();
 }

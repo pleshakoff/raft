@@ -2,6 +2,7 @@ package com.raft.server.context;
 
 
 import com.raft.server.exceptions.NotActiveException;
+import com.raft.server.log.OperationsLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ class ContextDecoratorImpl implements ContextDecorator {
     private final Peers peers;
     private final Term term;
     private final Context context;
+    private final OperationsLog operationsLog;
 
     @Override
     public Integer getId() {
@@ -113,6 +115,11 @@ class ContextDecoratorImpl implements ContextDecorator {
             setState(FOLLOWER);
             setCurrentTerm(term);
             setVotedFor(null);
+    }
+
+    @Override
+    public Integer getLastIndexSize() {
+        return operationsLog.getLastIndex();
     }
 
     @Override
