@@ -12,14 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(value = "/context",produces = {MediaType.APPLICATION_JSON_VALUE})
-@Api(tags="Attributes")
+@Api(tags="Context")
 @RequiredArgsConstructor
 class ContextController {
 
     private final Context context;
 
     @GetMapping
-    @ApiOperation(value = "Get current node context attributes")
+    @ApiOperation(value = "Get current node meta information")
     public Context getCurrentPeerState()  {
       return context;
     }

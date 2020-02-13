@@ -11,14 +11,14 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/context", produces = {MediaType.APPLICATION_JSON_VALUE})
-@Api(tags = "Attributes")
+@Api(tags = "Context")
 @RequiredArgsConstructor
 class ContextController {
 
     private final ContextService contextService;
 
     @GetMapping
-    @ApiOperation(value = "Get all peers data")
+    @ApiOperation(value = "Get all peers meta information")
     public List<Context> getCurrentPeerState() {
         return contextService.all();
     }

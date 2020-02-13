@@ -12,17 +12,17 @@ network:
   services:
     -
       name: 1
-      host: raft-client-1
+      host: raft-server-1
       port: 8081
       version: v1
     -
       name: 2
-      host: raft-client-2
+      host: raft-server-2
       port: 8082
       version: v1
     -
       name: 3
-      host: raft-client-3
+      host: raft-server-3
       port: 8083
       version: v1
 #    -
