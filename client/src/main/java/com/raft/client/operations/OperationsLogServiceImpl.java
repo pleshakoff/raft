@@ -1,7 +1,7 @@
-package com.raft.server.operations;
+package com.raft.client.operations;
 
 import com.network.http.Http;
-import com.raft.server.exchange.ExchangeService;
+import com.raft.client.exchange.ExchangeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;

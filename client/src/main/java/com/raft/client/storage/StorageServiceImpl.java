@@ -1,18 +1,13 @@
-package com.raft.server.storage;
+package com.raft.client.storage;
 
 import com.network.http.Http;
-import com.raft.server.exchange.ExchangeService;
-import com.raft.server.operations.Entry;
-import com.raft.server.operations.Operation;
+import com.raft.client.exchange.ExchangeService;
+import com.raft.client.operations.Entry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 @Service
@@ -41,6 +36,7 @@ public class StorageServiceImpl implements StorageService {
         Integer leaderId = exchangeService.getLeaderId();
         return http.callPost(leaderId.toString(),String.class,entry,"log").getBody();
     }
+
 
     @Override
     public String update(Long key,

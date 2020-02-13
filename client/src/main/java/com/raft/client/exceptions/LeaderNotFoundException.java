@@ -1,4 +1,4 @@
-package com.raft.server.exceptions;
+package com.raft.client.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

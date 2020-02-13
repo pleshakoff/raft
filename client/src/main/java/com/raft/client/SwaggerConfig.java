@@ -1,4 +1,4 @@
-package com.raft.server;
+package com.raft.client;
 
 
 import org.springframework.context.annotation.Bean;

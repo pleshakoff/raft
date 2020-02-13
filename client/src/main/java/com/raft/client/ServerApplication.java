@@ -1,4 +1,4 @@
-package com.raft.server;
+package com.raft.client;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,4 +14,4 @@ public class ServerApplication {
 
 }
 
-//-Pargs=--raft.election-timeout=10,--raft.id=1,--server.port=8081,--spring.profiles.active=debug
+//-Pargs=--raft.election-timeout=10,--raft.id=1,--client.port=8081,--spring.profiles.active=debug

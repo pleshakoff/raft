@@ -1,6 +1,6 @@
-package com.raft.server.storage;
+package com.raft.client.storage;
 
-import com.raft.server.operations.Entry;
+import com.raft.client.operations.Entry;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;

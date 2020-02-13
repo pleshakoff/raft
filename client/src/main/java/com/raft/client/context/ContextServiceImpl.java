@@ -1,8 +1,7 @@
-package com.raft.server.context;
+package com.raft.client.context;
 
 import com.network.http.Http;
-import com.raft.server.exceptions.LeaderNotFoundException;
-import com.raft.server.exchange.ExchangeService;
+import com.raft.client.exchange.ExchangeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

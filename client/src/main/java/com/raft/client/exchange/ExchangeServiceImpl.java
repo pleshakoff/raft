@@ -1,11 +1,11 @@
-package com.raft.server.exchange;
+package com.raft.client.exchange;
 
 import com.network.ServicesProps;
 import com.network.http.Http;
 import com.network.http.HttpException;
-import com.raft.server.context.Context;
-import com.raft.server.exceptions.LeaderNotFoundException;
-import com.raft.server.exceptions.PeerUnavailable;
+import com.raft.client.context.Context;
+import com.raft.client.exceptions.LeaderNotFoundException;
+import com.raft.client.exceptions.PeerUnavailable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

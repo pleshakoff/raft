@@ -1,11 +1,8 @@
-package com.raft.server.context;
+package com.raft.client.context;
 
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @RequiredArgsConstructor
 @Getter

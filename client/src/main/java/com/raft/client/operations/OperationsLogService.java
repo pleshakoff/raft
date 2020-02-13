@@ -1,4 +1,4 @@
-package com.raft.server.operations;
+package com.raft.client.operations;
 
 import java.util.List;
 
