@@ -36,6 +36,7 @@ class ReplicationServiceImpl implements ReplicationService {
     private final OperationsLog operationsLog;
 
 
+
     private List<AnswerAppendDTO> sendAppendToAllPeers(List<Integer> peers) {
         List<CompletableFuture<AnswerAppendDTO>> answerFutureList =
                 peers.stream()
@@ -59,22 +60,25 @@ class ReplicationServiceImpl implements ReplicationService {
                 //If last operations index ≥ nextIndex for a follower: send
                 //AppendEntries RPC with operations entries starting at nextIndex
                 Operation operation;
+                Integer prevIndex;
                 if (peer.getNextIndex() <= operationsLog.getLastIndex()) {
                     opNameForLog = "Append";
                     log.info("Peer #{} {}  request to {}. Peer next index: {}. Log last index:{} ",
                              context.getId(), opNameForLog, id, peer.getNextIndex(), operationsLog.getLastIndex());
                     operation = operationsLog.get(peer.getNextIndex());
+                    prevIndex = peer.getNextIndex() - 1;
                 } else {
                     operation = null;
                     log.debug("Peer #{} {} request  to {}", context.getId(), opNameForLog, id);
+                    prevIndex = operationsLog.getLastIndex();
                 }
 
 
                 RequestAppendDTO requestAppendDTO = new RequestAppendDTO(
                         context.getCurrentTerm(),
                         context.getId(),
-                        peer.getNextIndex() - 1,
-                        operationsLog.getTerm(peer.getNextIndex() - 1),
+                        prevIndex,
+                        operationsLog.getTerm(prevIndex),
                         context.getCommitIndex(),
                         operation
                 );
@@ -102,41 +106,43 @@ class ReplicationServiceImpl implements ReplicationService {
 
     @Override
     public void appendRequest() {
-        log.debug("Peer #{} Sending request to peers", context.getId());
-        List<Integer> peersIds = context.getPeers().stream().map(Peer::getId).collect(Collectors.toList());
+            log.debug("Peer #{} Sending request to peers", context.getId());
+            List<Integer> peersIds = context.getPeers().stream().map(Peer::getId).collect(Collectors.toList());
 
-        while (peersIds.size() > 0) {//retry until get success from all peers
-            List<AnswerAppendDTO> answers = sendAppendToAllPeers(peersIds);
-            peersIds = new ArrayList<>();
-            for (AnswerAppendDTO answer : answers) {
-                if (answer.getStatusCode().equals(OK)) {
-                    if (answer.getTerm() > context.getCurrentTerm()) {
-                        //• If RPC request or response contains term T > currentTerm: set currentTerm = T, convert to follower (§5.1)
-                        context.setTermGreaterThenCurrent(answer.getTerm());
-                        return;
-                    }
-                    Peer peer = context.getPeer(answer.getId());
-                    if (answer.getSuccess()) {
-                        //If successful: update nextIndex and matchIndex for follower
-                        log.debug("Peer #{} Get \"request success\"  from {}", context.getId(), answer.getId());
-                        log.debug("Peer #{} Set next index for {} Next: {} Match: {}. Old match:{}", context.getId(),
-                                  answer.getId(), answer.getMatchIndex() + 1, answer.getMatchIndex(),
-                                  peer.getMatchIndex());
-                        peer.setNextIndex(answer.getMatchIndex() + 1);
-                        peer.setMatchIndex(answer.getMatchIndex());
-
-                    } else {
-                        //If AppendEntries fails because of operations inconsistency:decrement nextIndex and retry
-                        log.debug("Peer #{} Get request fault from {} and decrement current next index {} ",
-                                  context.getId(), answer.getId(), peer.getNextIndex());
-                        peer.decNextIndex();
-                        peersIds.add(answer.getId());
+            while (peersIds.size() > 0) {//retry until get success from all peers
+                List<AnswerAppendDTO> answers = sendAppendToAllPeers(peersIds);
+                peersIds = new ArrayList<>();
+                for (AnswerAppendDTO answer : answers) {
+                    if (answer.getStatusCode().equals(OK)) {
+                        if (answer.getTerm() > context.getCurrentTerm()) {
+                            //• If RPC request or response contains term T > currentTerm: set currentTerm = T, convert to follower (§5.1)
+                            context.setTermGreaterThenCurrent(answer.getTerm());
+                            return;
+                        }
+                        Peer peer = context.getPeer(answer.getId());
+                        if (answer.getSuccess()) {
+                            //If successful: update nextIndex and matchIndex for follower
+                            log.debug("Peer #{} Get \"request success\"  from {}", context.getId(), answer.getId());
+                            log.debug("Peer #{} Set next index for {} Next: {} Match: {}. Old match:{}",
+                                      context.getId(),
+                                      answer.getId(), answer.getMatchIndex() + 1, answer.getMatchIndex(),
+                                      peer.getMatchIndex());
+                            peer.setNextIndex(answer.getMatchIndex() + 1);
+                            peer.setMatchIndex(answer.getMatchIndex());
+                            if (peer.getNextIndex() <= operationsLog.getLastIndex())
+                                peersIds.add(answer.getId());
+                        } else {
+                            //If AppendEntries fails because of operations inconsistency:decrement nextIndex and retry
+                            log.debug("Peer #{} Get request rejected from {} and decrement current next index {} ",
+                                      context.getId(), answer.getId(), peer.getNextIndex());
+                            peer.decNextIndex();
+                            peersIds.add(answer.getId());
+                        }
                     }
                 }
+                tryToCommit();
             }
-            tryToCommit();
-        }
-    }
+     }
 
     private void tryToCommit() {
 //        If there exists an N such that N > commitIndex, a majority
@@ -192,25 +198,34 @@ class ReplicationServiceImpl implements ReplicationService {
         }
 
 
-//        3. If an existing entry conflicts with a new one (same index but different terms),
-//        delete the existing entry and all that follow it (§5.3)
         String opNameForLog = "heartbeat";
         Operation newOperation = dto.getOperation();
         if (newOperation != null) {
+
             opNameForLog = "append";
             int newOperationIndex = dto.getPrevLogIndex() + 1;
             log.info("Peer #{} checking new operation. New index {}. Operation term: {}. Last index: {} ",
                      context.getId(), newOperationIndex, newOperation.getTerm(), operationsLog.getLastIndex());
-            if ((newOperationIndex <= operationsLog.getLastIndex()) &&
-                    (!newOperation.getTerm().equals(operationsLog.getTerm(newOperationIndex)))) {
-                operationsLog.removeAllFromIndex(newOperationIndex);
-            }
+
+          synchronized (this) {
+//              3. If an existing entry conflicts with a new one (same index but different terms),
+//              delete the existing entry and all that follow it (§5.3)
+                if ((newOperationIndex <= operationsLog.getLastIndex()) &&
+                        (!newOperation.getTerm().equals(operationsLog.getTerm(newOperationIndex)))) {
+                    operationsLog.removeAllFromIndex(newOperationIndex);
+                }
 //        4. Append any new entries not already in the operations
-            log.info("Peer #{} Append new operation. {}. key:{} val:{}",
-                     context.getId(), newOperation.getType(), newOperation.getEntry().getKey(),
-                     newOperation.getEntry().getVal());
-            operationsLog.append(newOperation);
-        }
+                if (newOperationIndex <= operationsLog.getLastIndex())
+                {
+                    //don't need to append
+                    return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(), true, operationsLog.getLastIndex());
+                }
+                log.info("Peer #{} Append new operation. {}. key:{} val:{}",
+                         context.getId(), newOperation.getType(), newOperation.getEntry().getKey(),
+                         newOperation.getEntry().getVal());
+                operationsLog.append(newOperation);
+            }
+         }
 //        5. If leaderCommit > commitIndex, set commitIndex = min(leaderCommit, index of last new entry)
         if (dto.getLeaderCommit() > context.getCommitIndex()) {
             context.setCommitIndex(Math.min(dto.getLeaderCommit(), operationsLog.getLastIndex()));

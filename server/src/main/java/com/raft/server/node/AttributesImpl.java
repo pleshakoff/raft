@@ -4,7 +4,6 @@ package com.raft.server.node;
 import com.raft.server.exceptions.NotActiveException;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
@@ -64,9 +63,7 @@ class AttributesImpl implements Attributes {
     @Override
     public void setState(State state) {
         log.info("Peer #{} Set new state: {}", getId(), state);
-        synchronized (this) {
-            this.state = state;
-        }
+         this.state = state;
     }
 
     @Override

@@ -37,7 +37,6 @@ class StorageServiceImpl implements StorageService {
         while (attributes.getLastApplied()< attributes.getCommitIndex())
         {
             apply(attributes.getCommitIndex());
-            attributes.incLastApplied();
         }
     }
 
@@ -59,8 +58,7 @@ class StorageServiceImpl implements StorageService {
             default:
                 throw  new RuntimeException("Unsupported operation");
         }
-
-
+        attributes.incLastApplied();
     }
 
 
