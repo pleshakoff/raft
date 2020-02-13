@@ -21,7 +21,7 @@ repositories {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	implementation 'com.github.pleshakoff:simple-network-starter:1.0.2'
+	implementation 'com.github.pleshakoff:simple-network-starter:1.0.3'
 	
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
