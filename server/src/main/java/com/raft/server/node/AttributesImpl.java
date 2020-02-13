@@ -22,7 +22,7 @@ class AttributesImpl implements Attributes {
 
     @Value("${raft.id}")
     @Getter
-    Integer id;
+    private Integer id;
 
     @Getter
     Boolean active = true;

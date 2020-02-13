@@ -106,7 +106,7 @@ class ContextImpl implements Context {
     }
 
     @Override
-    public Integer getLastIndexSize() {
+    public Integer getLastIndex() {
         return operationsLog.getLastIndex();
     }
 

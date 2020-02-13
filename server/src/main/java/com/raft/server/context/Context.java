@@ -48,5 +48,5 @@ public interface Context {
 
     void setTermGreaterThenCurrent(Long term);
 
-    Integer getLastIndexSize();
+    Integer getLastIndex();
 }

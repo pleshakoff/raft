@@ -1,3 +1,3 @@
 FROM openjdk:8u181-jre-slim
-COPY /build/libs/server.jar server.jar
-ENTRYPOINT ["java",  "-jar","/server.jar"]
+COPY /build/libs/raft-server.jar raft-server.jar
+ENTRYPOINT ["java",  "-jar","/raft-server.jar"]
