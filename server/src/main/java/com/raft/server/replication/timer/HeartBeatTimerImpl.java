@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import static com.raft.server.node.State.LEADER;
 
 @Service
-class HeartBeatTimerImpl extends RaftTimer implements HeartBeatTimer {
+class HeartBeatTimerImpl extends RaftTimer  {
 
 
     private final ReplicationService replicationService;

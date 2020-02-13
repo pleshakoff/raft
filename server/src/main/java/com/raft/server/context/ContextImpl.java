@@ -76,11 +76,6 @@ class ContextImpl implements Context {
     }
 
     @Override
-    public void incLastApplied() {
-        attributes.incLastApplied();
-    }
-
-    @Override
     public Integer getElectionTimeout() {
         return attributes.getElectionTimeout();
     }

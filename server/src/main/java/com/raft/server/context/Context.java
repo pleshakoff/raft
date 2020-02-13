@@ -36,8 +36,6 @@ public interface Context {
 
     Integer getLastApplied();
 
-    void incLastApplied();
-
     Integer getElectionTimeout();
     Integer getHeartBeatTimeout();
 
