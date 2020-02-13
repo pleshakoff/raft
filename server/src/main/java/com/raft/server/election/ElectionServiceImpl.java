@@ -6,10 +6,12 @@ import com.network.http.HttpException;
 import com.raft.server.context.Context;
 import com.raft.server.node.peers.Peer;
 import com.raft.server.operations.OperationsLog;
+import com.raft.server.replication.AnswerAppendDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,9 +50,13 @@ class ElectionServiceImpl implements ElectionService {
             } catch (HttpException e) {
                 log.error("Peer #{} Vote request error for {}. Response status code {}", context.getId(), id, e.getStatusCode());
                 return new AnswerVoteDTO(id, e.getStatusCode());
-            } catch (Exception e) {
+            } catch (ResourceAccessException e) {
                 log.error("Peer #{} Vote request error for {}. {} {} ", context.getId(), id,  e.getClass(), e.getMessage());
-                return new AnswerVoteDTO(id, BAD_REQUEST);
+                return new AnswerVoteDTO(id, SERVICE_UNAVAILABLE);
+            }
+            catch (Exception e) {
+                log.error("Peer #{} Vote request error for {}. {} {} ", context.getId(), id,  e.getClass(), e.getMessage());
+                return new AnswerVoteDTO(id, INTERNAL_SERVER_ERROR);
             }
 
         });

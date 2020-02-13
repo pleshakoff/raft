@@ -23,4 +23,10 @@ public class Context {
     private final List<Peer> peers;
     private final Integer lastIndex;
 
+    public boolean isLeader() {
+        return getState().equals(State.LEADER);
+    }
+
+
+
 }

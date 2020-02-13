@@ -10,8 +10,8 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping(value = "/context",produces = {MediaType.APPLICATION_JSON_VALUE})
-@Api(tags="Attributes")
+@RequestMapping(value = "/context", produces = {MediaType.APPLICATION_JSON_VALUE})
+@Api(tags = "Attributes")
 @RequiredArgsConstructor
 class ContextController {
 
@@ -19,26 +19,25 @@ class ContextController {
 
     @GetMapping
     @ApiOperation(value = "Get all peers data")
-    public List<Context> getCurrentPeerState()  {
-      return contextService.all();
+    public List<Context> getCurrentPeerState() {
+        return contextService.all();
     }
 
     @GetMapping("/leader")
-    @ApiOperation(value = "Get ")
-    public Integer getLeader()  {
+    @ApiOperation(value = "Get isLeader ID")
+    public Integer getLeader() {
         return contextService.leader();
     }
 
     @PostMapping("/stop")
     @ApiOperation(value = "Stop")
-    public void stop(@RequestParam Integer peerId)  {
+    public void stop(@RequestParam Integer peerId) {
         contextService.stop(peerId);
     }
 
     @PostMapping("/start")
     @ApiOperation(value = "Start")
-    public void start(@RequestParam Integer peerId)
-    {
+    public void start(@RequestParam Integer peerId) {
         contextService.start(peerId);
     }
 
