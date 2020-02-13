@@ -1,7 +1,7 @@
 package com.raft.server.timer;
 
 
-import com.raft.server.context.Context;
+import com.raft.server.node.Attributes;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public abstract class RaftTimer {
 
-    protected final Context context;
+    protected final Attributes attributes;
     private final Timer timer = new Timer();
 
     abstract protected Integer getTimeout();
@@ -26,8 +26,8 @@ public abstract class RaftTimer {
     @Getter
     private final AtomicInteger counter = new AtomicInteger(0);
 
-    protected RaftTimer(Context context) {
-        this.context = context;
+    protected RaftTimer(Attributes attributes) {
+        this.attributes = attributes;
     }
 
 
@@ -46,7 +46,7 @@ public abstract class RaftTimer {
             public void run() {
                 if (isRun()) {
                     counter.incrementAndGet();
-                    log.debug("Peer #{} Time to next {}: {} sec", context.getId(),getActionName(), getTimeout() - counter.get());
+                    log.debug("Peer #{} Time to next {}: {} sec", attributes.getId(), getActionName(), getTimeout() - counter.get());
                     if (counter.get() >= getTimeout()) {
                         counter.set(0);
                         getAction().run();

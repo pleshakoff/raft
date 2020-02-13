@@ -1,26 +1,26 @@
 package com.raft.server.election.timer;
 
 
-import com.raft.server.context.Context;
+import com.raft.server.node.Attributes;
 import com.raft.server.election.ElectionService;
 import com.raft.server.timer.RaftTimer;
 import org.springframework.stereotype.Service;
 
-import static com.raft.server.context.State.LEADER;
+import static com.raft.server.node.State.LEADER;
 
 @Service
 class ElectionTimerImpl extends RaftTimer implements ElectionTimer {
 
     private final ElectionService electionService;
 
-    protected ElectionTimerImpl(Context context, ElectionService electionService) {
-        super(context);
+    protected ElectionTimerImpl(Attributes attributes, ElectionService electionService) {
+        super(attributes);
         this.electionService = electionService;
     }
 
     @Override
     protected Integer getTimeout() {
-        return context.getElectionTimeout();
+        return attributes.getElectionTimeout();
     }
 
     @Override
@@ -36,7 +36,7 @@ class ElectionTimerImpl extends RaftTimer implements ElectionTimer {
 
     @Override
     protected boolean isRun() {
-        return context.getActive() && !context.getState().equals(LEADER);
+        return attributes.getActive() && !attributes.getState().equals(LEADER);
     }
 
 }

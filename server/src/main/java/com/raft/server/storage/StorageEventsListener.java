@@ -1,7 +1,7 @@
 package com.raft.server.storage;
 
 
-import com.raft.server.context.CommittedIndexChangedEvent;
+import com.raft.server.node.CommittedIndexChangedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;

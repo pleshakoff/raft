@@ -3,9 +3,9 @@ package com.raft.server.election;
 
 import com.network.http.Http;
 import com.network.http.HttpException;
-import com.raft.server.context.ContextDecorator;
-import com.raft.server.context.peers.Peer;
-import com.raft.server.log.OperationsLog;
+import com.raft.server.context.Context;
+import com.raft.server.node.peers.Peer;
+import com.raft.server.operations.OperationsLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static com.raft.server.context.State.*;
+import static com.raft.server.node.State.*;
 import static org.springframework.http.HttpStatus.*;
 
 @Service
@@ -26,7 +26,7 @@ import static org.springframework.http.HttpStatus.*;
 class ElectionServiceImpl implements ElectionService {
 
     private static final int VOTE_RETRY_DELAY = 2000;
-    private final ContextDecorator context;
+    private final Context context;
     private final Http http;
     private final OperationsLog operationsLog;
 
@@ -144,8 +144,8 @@ class ElectionServiceImpl implements ElectionService {
         context.setState(LEADER);
 
 
-//        for each server, index of the next log entry  to send to that server
-//        (initialized to leader last log index + 1)
+//        for each server, index of the next operations entry  to send to that server
+//        (initialized to leader last operations index + 1)
           context.getPeers().forEach(peer ->
                 peer.setNextIndex(operationsLog.getLastIndex()+1)
 
@@ -172,8 +172,8 @@ class ElectionServiceImpl implements ElectionService {
 
 
 //        1. Reply false if term < currentTerm (§5.1)
-//        2. If votedFor is null or candidateId, and candidate’s log is at
-//        least as up-to-date as receiver’s log, grant vote (§5.2, §5.4)
+//        2. If votedFor is null or candidateId, and candidate’s operations is at
+//        least as up-to-date as receiver’s operations, grant vote (§5.2, §5.4)
 
         boolean termCheck;
         if (dto.getTerm() < context.getCurrentTerm())

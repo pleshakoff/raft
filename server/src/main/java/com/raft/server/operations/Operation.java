@@ -1,4 +1,4 @@
-package com.raft.server.log;
+package com.raft.server.operations;
 
 
 import lombok.Getter;

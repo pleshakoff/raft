@@ -20,7 +20,7 @@ class ReplicationController {
     private final ReplicationService replicationService;
 
     @PostMapping("/append")
-    @ApiOperation(value = "Append to log")
+    @ApiOperation(value = "Append to operations")
     public AnswerAppendDTO appendRequest(@Valid @RequestBody RequestAppendDTO requestAppendDTO,
                                          BindingResult bindingResult) throws BindException {
         if (bindingResult.hasErrors()) {

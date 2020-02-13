@@ -1,6 +1,6 @@
 package com.raft.server.storage;
 
-import com.raft.server.log.Entry;
+import com.raft.server.operations.Entry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

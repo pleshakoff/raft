@@ -3,10 +3,10 @@ package com.raft.server.replication;
 
 import com.network.http.Http;
 import com.network.http.HttpException;
-import com.raft.server.context.ContextDecorator;
-import com.raft.server.context.peers.Peer;
-import com.raft.server.log.Operation;
-import com.raft.server.log.OperationsLog;
+import com.raft.server.context.Context;
+import com.raft.server.node.peers.Peer;
+import com.raft.server.operations.Operation;
+import com.raft.server.operations.OperationsLog;
 import com.raft.server.election.timer.ResetElectionTimerEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static com.raft.server.context.State.FOLLOWER;
+import static com.raft.server.node.State.FOLLOWER;
 import static org.springframework.http.HttpStatus.*;
 
 @Service
@@ -30,13 +30,13 @@ class ReplicationServiceImpl implements ReplicationService {
 
 
     private final Http http;
-    private final ContextDecorator context;
+    private final Context context;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final OperationsLog operationsLog;
 
 
     private List<AnswerAppendDTO> sendAppendToAllPeers(List<Integer> peers) {
-        //log.debug("Peer #{} Forward request to peers. Peers count: {}", context.getId(), peers.size());
+        //operations.debug("Peer #{} Forward request to peers. Peers count: {}", attributes.getId(), peers.size());
         List<CompletableFuture<AnswerAppendDTO>> answerFutureList =
                 peers.stream()
                         .map(this::sendAppendForOnePeer)
@@ -56,8 +56,8 @@ class ReplicationServiceImpl implements ReplicationService {
 
                 Peer peer = context.getPeer(id);
 
-                //• If last log index ≥ nextIndex for a follower: send
-                //AppendEntries RPC with log entries starting at nextIndex
+                //• If last operations index ≥ nextIndex for a follower: send
+                //AppendEntries RPC with operations entries starting at nextIndex
                 Operation operation;
                 if (peer.getNextIndex() <= operationsLog.getLastIndex()) {
                     opNameForLog = "Append";
@@ -120,7 +120,7 @@ class ReplicationServiceImpl implements ReplicationService {
                                 peer.setMatchIndex(answer.getMatchIndex());
 
                     } else {
-                        //If AppendEntries fails because of log inconsistency:decrement nextIndex and retry
+                        //If AppendEntries fails because of operations inconsistency:decrement nextIndex and retry
                         log.debug("Peer #{} Get request fault from {} and decrement current next index {} ", context.getId(), answer.getId(),peer.getNextIndex());
                         peer.decNextIndex();
                         peersIds.add(answer.getId());
@@ -134,10 +134,10 @@ class ReplicationServiceImpl implements ReplicationService {
     
     private void  tryToCommit() {
 //        If there exists an N such that N > commitIndex, a majority
-//        of matchIndex[i] ≥ N, and log[N].term == currentTerm:
+//        of matchIndex[i] ≥ N, and operations[N].term == currentTerm:
 //        set commitIndex = N (§5.3, §5.4).
 
-        log.debug("Peer #{} trying to commit log. Current commit index {}", context.getId(),context.getCommitIndex());
+        log.debug("Peer #{} trying to commit operations. Current commit index {}", context.getId(),context.getCommitIndex());
         while (true) {
             int N =  context.getCommitIndex()+1;
             long count = context.getPeers().stream().map(Peer::getMatchIndex).
@@ -158,7 +158,7 @@ class ReplicationServiceImpl implements ReplicationService {
 
     @Override
     public AnswerAppendDTO append(RequestAppendDTO dto) {
-        // Invoked by leader to replicate log entries (§5.3); also used as heartbeat (§5.2).
+        // Invoked by leader to replicate operations entries (§5.3); also used as heartbeat (§5.2).
 
         context.cancelIfNotActive();
 
@@ -177,7 +177,7 @@ class ReplicationServiceImpl implements ReplicationService {
             context.setState(FOLLOWER);
         }
 
-//        2. Reply false if log does not contain an entry at prevLogIndex
+//        2. Reply false if operations does not contain an entry at prevLogIndex
 //        whose term matches prevLogTerm (§5.3)
         if ((dto.getPrevLogIndex()>operationsLog.getLastIndex())|| !dto.getPrevLogTerm().equals(operationsLog.getTerm(dto.getPrevLogIndex()))) {
             log.debug("Peer #{} Rejected opName from {}. Log doesn't contain prev term. Current term {}, Candidate term {} ",
@@ -199,7 +199,7 @@ class ReplicationServiceImpl implements ReplicationService {
                  (!newOperation.getTerm().equals(operationsLog.getTerm(newOperationIndex)))) {
                 operationsLog.removeAllFromIndex(newOperationIndex);
             }
-//        4. Append any new entries not already in the log
+//        4. Append any new entries not already in the operations
             operationsLog.append(newOperation);
             opName = "opName";
         }

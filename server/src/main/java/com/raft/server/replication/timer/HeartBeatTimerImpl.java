@@ -1,13 +1,12 @@
 package com.raft.server.replication.timer;
 
 
-import com.raft.server.context.Context;
+import com.raft.server.node.Attributes;
 import com.raft.server.replication.ReplicationService;
-import com.raft.server.replication.timer.HeartBeatTimer;
 import com.raft.server.timer.RaftTimer;
 import org.springframework.stereotype.Service;
 
-import static com.raft.server.context.State.LEADER;
+import static com.raft.server.node.State.LEADER;
 
 @Service
 class HeartBeatTimerImpl extends RaftTimer implements HeartBeatTimer {
@@ -15,14 +14,14 @@ class HeartBeatTimerImpl extends RaftTimer implements HeartBeatTimer {
 
     private final ReplicationService replicationService;
 
-    protected HeartBeatTimerImpl(Context context, ReplicationService replicationService) {
-        super(context);
+    protected HeartBeatTimerImpl(Attributes attributes, ReplicationService replicationService) {
+        super(attributes);
         this.replicationService = replicationService;
     }
 
     @Override
     protected Integer getTimeout() {
-        return context.getHeartBeatTimeout();
+        return attributes.getHeartBeatTimeout();
     }
 
     @Override
@@ -37,7 +36,7 @@ class HeartBeatTimerImpl extends RaftTimer implements HeartBeatTimer {
 
     @Override
     protected boolean isRun() {
-            return context.getActive() && context.getState().equals(LEADER);
+            return attributes.getActive() && attributes.getState().equals(LEADER);
     }
 
 

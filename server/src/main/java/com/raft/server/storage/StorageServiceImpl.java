@@ -1,17 +1,15 @@
 package com.raft.server.storage;
 
 
-import com.raft.server.context.Context;
-import com.raft.server.log.Entry;
-import com.raft.server.log.Operation;
-import com.raft.server.log.OperationsLog;
+import com.raft.server.node.Attributes;
+import com.raft.server.operations.Entry;
+import com.raft.server.operations.Operation;
+import com.raft.server.operations.OperationsLog;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
-import static com.raft.server.log.OperationType.INSERT;
 
 @Service
 @Slf4j
@@ -19,33 +17,34 @@ import static com.raft.server.log.OperationType.INSERT;
 class StorageServiceImpl implements StorageService {
 
     private final Storage storage;
-    private final Context context;
+    private final Attributes attributes;
     private final OperationsLog operationsLog;
 
     @Override
     public String get(Long id) {
-        context.cancelIfNotActive();
+        attributes.cancelIfNotActive();
         return storage.get(id);
     }
 
     @Override
     public List<Entry> all() {
-        context.cancelIfNotActive();
+        attributes.cancelIfNotActive();
         return storage.all();
     }
 
     @Override
     public void applyCommitted(){
-        log.debug("Peer #{} Trying to apply committed.LastApplied: {}, Commit Index: {} ", context.getId(), context.getLastApplied(),context.getCommitIndex());
-        while (context.getLastApplied()<context.getCommitIndex())
+        log.debug("Peer #{} Trying to apply committed.LastApplied: {}, Commit Index: {} ", attributes.getId(), attributes.getLastApplied(),
+                  attributes.getCommitIndex());
+        while (attributes.getLastApplied()< attributes.getCommitIndex())
         {
-            apply(context.getCommitIndex());
-            context.incLastApplied();
+            apply(attributes.getCommitIndex());
+            attributes.incLastApplied();
         }
     }
 
     private void apply(Integer index){
-        log.info("Peer #{} Apply commit index: {}", context.getId(), index);
+        log.info("Peer #{} Apply commit index: {}", attributes.getId(), index);
         Operation operation = operationsLog.get(index);
         Entry entry = operation.getEntry();
 

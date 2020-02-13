@@ -1,6 +1,7 @@
-package com.raft.server.context.peers;
+package com.raft.server.node.peers;
 
 public interface Peer {
+
     Integer getId();
 
     Integer getNextIndex();
@@ -16,4 +17,5 @@ public interface Peer {
     void setMatchIndex(Integer matchIndex);
 
     void setVoteGranted(Boolean voteGranted);
+
 }

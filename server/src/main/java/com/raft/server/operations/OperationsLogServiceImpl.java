@@ -1,9 +1,9 @@
-package com.raft.server.log;
+package com.raft.server.operations;
 
 
-import com.raft.server.context.Context;
-import com.raft.server.context.State;
-import com.raft.server.context.term.Term;
+import com.raft.server.node.Attributes;
+import com.raft.server.node.State;
+import com.raft.server.node.term.Term;
 import com.raft.server.exceptions.NotLeaderException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -11,14 +11,14 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.raft.server.log.OperationType.*;
+import static com.raft.server.operations.OperationType.*;
 
 @Service
 @RequiredArgsConstructor
 class OperationsLogServiceImpl implements OperationsLogService {
 
     private final OperationsLog operationsLog;
-    private final Context context;
+    private final Attributes attributes;
     private final Term term;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -50,8 +50,8 @@ class OperationsLogServiceImpl implements OperationsLogService {
     }
 
     private void appendToLog(OperationType insert, Entry entry) {
-        context.cancelIfNotActive();
-        if (!context.getState().equals(State.LEADER)) {
+        attributes.cancelIfNotActive();
+        if (!attributes.getState().equals(State.LEADER)) {
             throw new NotLeaderException();
         }
         Operation operation = new Operation(term.getCurrentTerm(), insert, entry);

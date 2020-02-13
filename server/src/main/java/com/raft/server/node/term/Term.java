@@ -1,4 +1,4 @@
-package com.raft.server.context.term;
+package com.raft.server.node.term;
 
 public interface Term {
 

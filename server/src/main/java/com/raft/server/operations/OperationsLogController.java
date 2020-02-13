@@ -1,4 +1,4 @@
-package com.raft.server.log;
+package com.raft.server.operations;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -23,7 +23,7 @@ class OperationsLogController {
 
 
     @GetMapping
-    @ApiOperation(value = "Get all log")
+    @ApiOperation(value = "Get all operations")
     public List<Operation> all(){
         return operationsLogService.all();
     }

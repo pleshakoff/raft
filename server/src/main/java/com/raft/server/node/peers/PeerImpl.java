@@ -1,4 +1,4 @@
-package com.raft.server.context.peers;
+package com.raft.server.node.peers;
 
 
 import lombok.RequiredArgsConstructor;

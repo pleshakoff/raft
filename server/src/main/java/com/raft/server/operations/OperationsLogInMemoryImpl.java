@@ -1,4 +1,4 @@
-package com.raft.server.log;
+package com.raft.server.operations;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -51,7 +51,7 @@ class OperationsLogInMemoryImpl implements OperationsLog {
 
     @Override
     synchronized public void removeAllFromIndex(int index) {
-        log.info("Remove operations from log. From index {} to {}",index,operationsLog.size()-1);
+        log.info("Remove operations from operations. From index {} to {}",index,operationsLog.size()-1);
 
         int delta = operationsLog.size()-index;
         for (int i = 0; i < delta; i++) {

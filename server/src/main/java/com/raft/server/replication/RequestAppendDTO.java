@@ -1,7 +1,7 @@
 package com.raft.server.replication;
 
 
-import com.raft.server.log.Operation;
+import com.raft.server.operations.Operation;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

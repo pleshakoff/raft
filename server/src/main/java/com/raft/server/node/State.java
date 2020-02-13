@@ -1,4 +1,4 @@
-package com.raft.server.context;
+package com.raft.server.node;
 
 public enum State {
 
