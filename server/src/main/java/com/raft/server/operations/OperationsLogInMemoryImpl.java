@@ -1,5 +1,7 @@
 package com.raft.server.operations;
 
+import com.raft.server.node.Attributes;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -8,10 +10,12 @@ import java.util.List;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 class OperationsLogInMemoryImpl implements OperationsLog {
 
 
     private static final Integer EMPTY_LOG_LAST_INDEX = -1;
+    private final Attributes attributes;
 
 
     private final List<Operation> operationsLog = new ArrayList<>();
@@ -51,7 +55,7 @@ class OperationsLogInMemoryImpl implements OperationsLog {
 
     @Override
     synchronized public void removeAllFromIndex(int index) {
-        log.info("Remove operations from operations. From index {} to {}",index,operationsLog.size()-1);
+        log.info("Peer #{} Remove operations from operations. From index {} to {}",attributes.getId(),index,operationsLog.size()-1);
 
         int delta = operationsLog.size()-index;
         for (int i = 0; i < delta; i++) {

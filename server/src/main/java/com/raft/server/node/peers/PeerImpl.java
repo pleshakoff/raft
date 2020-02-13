@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 
 @RequiredArgsConstructor
-@Slf4j
 public class PeerImpl implements Peer {
 
     final Integer id;

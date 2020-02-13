@@ -36,7 +36,6 @@ class ReplicationServiceImpl implements ReplicationService {
 
 
     private List<AnswerAppendDTO> sendAppendToAllPeers(List<Integer> peers) {
-        //operations.debug("Peer #{} Forward request to peers. Peers count: {}", attributes.getId(), peers.size());
         List<CompletableFuture<AnswerAppendDTO>> answerFutureList =
                 peers.stream()
                         .map(this::sendAppendForOnePeer)
@@ -56,18 +55,18 @@ class ReplicationServiceImpl implements ReplicationService {
 
                 Peer peer = context.getPeer(id);
 
-                //• If last operations index ≥ nextIndex for a follower: send
+                //If last operations index ≥ nextIndex for a follower: send
                 //AppendEntries RPC with operations entries starting at nextIndex
                 Operation operation;
                 if (peer.getNextIndex() <= operationsLog.getLastIndex()) {
                     opNameForLog = "Append";
                     operation = operationsLog.get(peer.getNextIndex());
-                    log.info("Peer #{} {} request to {}. Peer next index: {}. Log last index:{} ",
+                    log.info("Peer #{} {}  request to {}. Peer next index: {}. Log last index:{} ",
                              context.getId(),opNameForLog,id,peer.getNextIndex(),operationsLog.getLastIndex());
                 }
                 else {
                     operation = null;
-                    log.info("Peer #{} {} request  to {}", context.getId(),opNameForLog,id);
+                    log.debug("Peer #{} {} request  to {}", context.getId(),opNameForLog,id);
                 }
 
 
@@ -85,10 +84,10 @@ class ReplicationServiceImpl implements ReplicationService {
                 return Optional.ofNullable(response.getBody()).
                         orElse(new AnswerAppendDTO(id, NO_CONTENT));
             } catch (HttpException e) {
-                log.info("Peer #{} {} request error for {}. Response status code {}", context.getId(),opNameForLog, id, e.getStatusCode());
+                log.error("Peer #{} {} request error for {}. Response status code {}", context.getId(),opNameForLog, id, e.getStatusCode());
                 return new AnswerAppendDTO(id, e.getStatusCode());
             } catch (Exception e) {
-                log.info("Peer #{} {} request error for {}. {} {} ", context.getId(),opNameForLog,id,e.getClass() ,e.getMessage());
+                log.error("Peer #{} {} request error for {}. {} {} ", context.getId(),opNameForLog,id,e.getClass() ,e.getMessage());
                 return new AnswerAppendDTO(id, BAD_REQUEST);
             }
 
@@ -128,8 +127,7 @@ class ReplicationServiceImpl implements ReplicationService {
                 }
             }
             tryToCommit();
-
-        }
+       }
     }
     
     private void  tryToCommit() {
@@ -141,7 +139,7 @@ class ReplicationServiceImpl implements ReplicationService {
         while (true) {
             int N =  context.getCommitIndex()+1;
             long count = context.getPeers().stream().map(Peer::getMatchIndex).
-                    filter(matchIndex -> matchIndex >=N).count()+1;//followers plus leader
+                    filter(matchIndex -> matchIndex >=N).count()+1;//followers plus me
             if (count>=context.getQuorum() &&
                 operationsLog.getLastIndex()>=N &&
                 operationsLog.getTerm(N).equals(context.getCurrentTerm()))
@@ -151,8 +149,6 @@ class ReplicationServiceImpl implements ReplicationService {
             else
               return;
         }
-
-
     }
     
 
@@ -164,7 +160,7 @@ class ReplicationServiceImpl implements ReplicationService {
 
         // Reply false if term < currentTerm (§5.1)
         if (dto.getTerm() < context.getCurrentTerm()) {
-            log.debug("Peer #{} Rejected opName from {}. Term too small", context.getId(), dto.getLeaderId());
+            log.info("Peer #{} Rejected request from {}. Term {} too small", context.getId(), dto.getLeaderId(),dto.getTerm());
             return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(), false, null);
         } else if (dto.getTerm() > context.getCurrentTerm()) {
             //If RPC request or response contains term T > currentTerm: set currentTerm = T,
@@ -179,19 +175,20 @@ class ReplicationServiceImpl implements ReplicationService {
 
 //        2. Reply false if operations does not contain an entry at prevLogIndex
 //        whose term matches prevLogTerm (§5.3)
-        if ((dto.getPrevLogIndex()>operationsLog.getLastIndex())|| !dto.getPrevLogTerm().equals(operationsLog.getTerm(dto.getPrevLogIndex()))) {
-            log.debug("Peer #{} Rejected opName from {}. Log doesn't contain prev term. Current term {}, Candidate term {} ",
+        if ((dto.getPrevLogIndex()>operationsLog.getLastIndex())||
+                !dto.getPrevLogTerm().equals(operationsLog.getTerm(dto.getPrevLogIndex()))) {
+            log.info("Peer #{} Rejected request from {}. Log doesn't contain prev term. Current term {}, Candidate term {} ",
                     context.getId(), dto.getLeaderId(), context.getCurrentTerm(), dto.getTerm());
             return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(), false, null);
         }
 
 
-//        3. If an existing entry conflicts with a new one (same index
-//                but different terms), delete the existing entry and all that
-//        follow it (§5.3)
-        String opName = "heartbeat";
+//        3. If an existing entry conflicts with a new one (same index but different terms),
+//        delete the existing entry and all that follow it (§5.3)
+        String opNameForLog = "heartbeat";
         Operation newOperation = dto.getOperation();
         if (newOperation !=null) {
+            opNameForLog = "append";
             int newOperationIndex = dto.getPrevLogIndex() + 1;
             log.info("Peer #{} checking new operation. New index {}. Operation term: {}. Last index: {} ",
                      context.getId(), newOperationIndex,newOperation.getTerm(), operationsLog.getLastIndex());
@@ -200,16 +197,16 @@ class ReplicationServiceImpl implements ReplicationService {
                 operationsLog.removeAllFromIndex(newOperationIndex);
             }
 //        4. Append any new entries not already in the operations
+            log.info("Peer #{} Append new operation. {}. key:{} val:{}",
+                     context.getId(),newOperation.getType(), newOperation.getEntry().getKey(),newOperation.getEntry().getVal());
             operationsLog.append(newOperation);
-            opName = "opName";
         }
-//        5. If leaderCommit > commitIndex, set commitIndex =
-//                min(leaderCommit, index of last new entry)
+//        5. If leaderCommit > commitIndex, set commitIndex = min(leaderCommit, index of last new entry)
         if (dto.getLeaderCommit() > context.getCommitIndex()) {
             context.setCommitIndex(Math.min(dto.getLeaderCommit(), operationsLog.getLastIndex()));
         }
 
-        log.debug("Peer #{}. Success answer to {} request. Term: {}. Mach index {}", context.getId(), opName, context.getCurrentTerm(), operationsLog.getLastIndex());
+        log.debug("Peer #{}. Success answer to {} request. Term: {}. Mach index {}", context.getId(), opNameForLog, context.getCurrentTerm(), operationsLog.getLastIndex());
         return new AnswerAppendDTO(context.getId(), context.getCurrentTerm(), true, operationsLog.getLastIndex());
     }
 

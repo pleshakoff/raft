@@ -19,23 +19,31 @@ import static com.raft.server.node.State.FOLLOWER;
 @RequiredArgsConstructor
 class AttributesImpl implements Attributes {
 
-
     private final ApplicationEventPublisher applicationEventPublisher;
-
 
     @Value("${raft.id}")
     @Getter
     Integer id;
 
-    @Setter
     @Getter
     Boolean active = true;
 
+    @Override
+    public void setActive(Boolean active) {
+        this.active = active;
+        log.info("Peer #{} {}", getId(),active?"STARTED":"STOPPED");
+    }
+
     private volatile State state = FOLLOWER;
 
-    @Setter
     @Getter
-    private volatile Integer votedFor = null;//TODO make persist
+    private volatile Integer votedFor = null;
+
+    @Override
+    public void setVotedFor(Integer votedFor) {
+        this.votedFor = votedFor;
+        log.debug("Peer #{} set voted for {}", getId(),votedFor);
+    }
 
     private final AtomicInteger commitIndex = new AtomicInteger(-1);
     private final AtomicInteger lastApplied = new AtomicInteger(-1);
@@ -69,8 +77,8 @@ class AttributesImpl implements Attributes {
     @Override
     public void setCommitIndex(Integer commitIndex) {
         this.commitIndex.set(commitIndex);
-        applicationEventPublisher.publishEvent(new CommittedIndexChangedEvent(this));
         log.info("Peer #{} New commit index: {}", getId(), this.commitIndex.get());
+        applicationEventPublisher.publishEvent(new CommittedIndexChangedEvent(this));
     }
 
     @Override

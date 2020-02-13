@@ -16,9 +16,15 @@ class RequestAppendDTO {
     @NotNull
     private final Integer leaderId;
 
+    @NotNull
     private final Integer prevLogIndex;
+
+    @NotNull
     private final Long prevLogTerm;
+
+    @NotNull
     private final Integer leaderCommit;
+
     private final Operation operation;
 
 }

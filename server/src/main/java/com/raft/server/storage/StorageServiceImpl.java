@@ -22,13 +22,11 @@ class StorageServiceImpl implements StorageService {
 
     @Override
     public String get(Long id) {
-        attributes.cancelIfNotActive();
         return storage.get(id);
     }
 
     @Override
     public List<Entry> all() {
-        attributes.cancelIfNotActive();
         return storage.all();
     }
 
@@ -44,9 +42,9 @@ class StorageServiceImpl implements StorageService {
     }
 
     private void apply(Integer index){
-        log.info("Peer #{} Apply commit index: {}", attributes.getId(), index);
         Operation operation = operationsLog.get(index);
         Entry entry = operation.getEntry();
+        log.info("Peer #{} Apply operation to storage: {} key: {} value: {} ", attributes.getId(),operation.getType(),entry.getKey(),entry.getVal() );
 
         switch (operation.getType()) {
             case INSERT:

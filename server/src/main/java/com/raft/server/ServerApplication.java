@@ -13,3 +13,5 @@ public class ServerApplication {
 	}
 
 }
+
+//spring.profiles.active=debug

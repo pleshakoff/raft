@@ -3,6 +3,7 @@ package com.raft.server.node.peers;
 
 import com.network.Service;
 import com.network.ServicesProps;
+import com.raft.server.node.Attributes;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,10 +17,9 @@ import java.util.List;
 @RequiredArgsConstructor
 class PeersImpl implements Peers {
 
-    @Value("${raft.id}")
-    Integer id;
 
     private final ServicesProps servicesProps;
+    private final Attributes attributes;
 
     @Getter
     private Integer quorum;
@@ -45,7 +45,7 @@ class PeersImpl implements Peers {
         servicesProps.getServices().stream().
                 map(Service::getName).
                 map(Integer::parseInt).
-                filter(id -> !id.equals(this.id)).
+                filter(id -> !id.equals(attributes.getId())).
                 forEach(this::add);
 
         quorum = servicesProps.getServices().size()/2+1;

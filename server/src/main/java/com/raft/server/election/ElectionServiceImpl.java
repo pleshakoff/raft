@@ -46,10 +46,10 @@ class ElectionServiceImpl implements ElectionService {
                 return Optional.ofNullable(response.getBody()).
                         orElse(new AnswerVoteDTO(id, NO_CONTENT));
             } catch (HttpException e) {
-                log.info("Peer #{} Vote request error for {}. Response status code {}", context.getId(), id, e.getStatusCode());
+                log.error("Peer #{} Vote request error for {}. Response status code {}", context.getId(), id, e.getStatusCode());
                 return new AnswerVoteDTO(id, e.getStatusCode());
             } catch (Exception e) {
-                log.info("Peer #{} Vote request error for {}. {} {} ", context.getId(), id,  e.getClass(), e.getMessage());
+                log.error("Peer #{} Vote request error for {}. {} {} ", context.getId(), id,  e.getClass(), e.getMessage());
                 return new AnswerVoteDTO(id, BAD_REQUEST);
             }
 
@@ -57,7 +57,7 @@ class ElectionServiceImpl implements ElectionService {
     }
 
     private List<AnswerVoteDTO> getVoteFromAllPeers(Long term, List<Integer> peers) {
-        log.info("Peer #{} Forward vote request to peers. Term {}. Peers count: {}", context.getId(), term, peers.size());
+        log.debug("Peer #{} Forward vote request to peers. Term {}. Peers count: {}", context.getId(), term, peers.size());
         List<CompletableFuture<AnswerVoteDTO>> answerFutureList =
                 peers.stream()
                         .map(i -> getVoteFromOnePeer(i,term))

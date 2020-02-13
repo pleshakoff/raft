@@ -6,6 +6,7 @@ import com.raft.server.node.State;
 import com.raft.server.node.term.Term;
 import com.raft.server.exceptions.NotLeaderException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import static com.raft.server.operations.OperationType.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 class OperationsLogServiceImpl implements OperationsLogService {
 
     private final OperationsLog operationsLog;
@@ -40,6 +42,7 @@ class OperationsLogServiceImpl implements OperationsLogService {
 
     @Override
     public void sneakyInsert(Entry entry) {
+        log.info("Peer #{} SNEAKY INSERT!!! key:{} val:{}", attributes.getId(),entry.getKey(),entry.getVal());
         Operation operation = new Operation(term.getCurrentTerm(), INSERT, entry);
         operationsLog.append(operation);
     }
@@ -49,12 +52,13 @@ class OperationsLogServiceImpl implements OperationsLogService {
         return operationsLog.all();
     }
 
-    private void appendToLog(OperationType insert, Entry entry) {
+    private void appendToLog(OperationType type, Entry entry) {
+        log.info("Peer #{} Append new operation. {}. key:{} val:{}", attributes.getId(),type,entry.getKey(),entry.getVal());
         attributes.cancelIfNotActive();
         if (!attributes.getState().equals(State.LEADER)) {
             throw new NotLeaderException();
         }
-        Operation operation = new Operation(term.getCurrentTerm(), insert, entry);
+        Operation operation = new Operation(term.getCurrentTerm(), type, entry);
         operationsLog.append(operation);
         applicationEventPublisher.publishEvent(new OperationsLogAppendedEvent(this));
     }

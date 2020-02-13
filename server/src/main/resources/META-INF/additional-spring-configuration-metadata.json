@@ -1,0 +1,18 @@
+{
+  "properties": [
+    {
+      "name": "raft.id",
+      "type": "java.lang.String",
+      "description": "node ID"
+    },
+    {
+      "name": "raft.api.version",
+      "type": "java.lang.String",
+      "description": "Version API for server path"
+    },
+    {
+      "name": "raft.heartbeat-timeout",
+      "type": "java.lang.String",
+      "description": "Heart beat timeout"
+    }
+  ] }

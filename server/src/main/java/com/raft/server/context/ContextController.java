@@ -19,7 +19,7 @@ class ContextController {
     private final Context context;
 
     @GetMapping
-    @ApiOperation(value = "Get current peer attributes attributes")
+    @ApiOperation(value = "Get current node context attributes")
     public Context getCurrentPeerState()  {
       return context;
     }

@@ -44,7 +44,17 @@ spring:
 
 logging:
   level:
-     com.network.http.rest_template:  ERROR
+    com.network.http.rest_template:  ERROR
+
+
+---
+spring:
+  profiles: debug
+
+logging:
+  level:
      com.raft.server.replication:  DEBUG
      com.raft.server.election:  DEBUG
      com.raft.server.timer.RaftTimer: DEBUG
+
+
