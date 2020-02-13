@@ -53,8 +53,6 @@ spring:
 
 logging:
   level:
-     com.raft.server.replication:  DEBUG
-     com.raft.server.election:  DEBUG
-     com.raft.server.timer.RaftTimer: DEBUG
+     com.raft.server:  DEBUG
 
 
