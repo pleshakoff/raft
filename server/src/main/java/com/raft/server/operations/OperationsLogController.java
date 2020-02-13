@@ -55,7 +55,7 @@ class OperationsLogController {
 
     @PutMapping("/{key}")
     @ApiOperation(value = "Update")
-    public String insert(@PathVariable Long key,@RequestParam String val)  {
+    public String insert(@PathVariable Long key,@RequestBody String val)  {
         operationsLogService.update(key, val);
         return  DONE;
     }

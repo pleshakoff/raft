@@ -49,7 +49,7 @@ class StorageController {
     @PutMapping("/{key}")
     @ApiOperation(value = "Update")
     public String insert(@PathVariable Long key,
-                         @RequestParam String val) {
+                         @RequestBody String val) {
         return storageService.update(key, val);
     }
 

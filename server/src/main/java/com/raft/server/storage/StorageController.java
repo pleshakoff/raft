@@ -21,7 +21,7 @@ class StorageController {
     @GetMapping("/{key}")
     @ApiOperation(value = "Get value by key")
     public String get(@PathVariable Long key){
-          return storageService.get(key);
+          return String.format("{\"val\":\"%s\"}", storageService.get(key));
     }
 
     @GetMapping
