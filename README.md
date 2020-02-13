@@ -161,12 +161,12 @@ GET запросы можно запускать прямо в браузере.
 
 ##### Логи 
 
-`docker-compose logs -f raft-server-1 
+`docker-compose logs -f raft-server-1 `
 
-docker-compose logs -f raft-server-2
+`docker-compose logs -f raft-server-2`
  
-docker-compose logs -f raft-server-3 
-`
+`docker-compose logs -f raft-server-3` 
+
 Если есть желание видеть логи с более подробной информациеей то надо в docker-compose.yml
 раскомментировать для тэга command параметр с профилем debug 
 
