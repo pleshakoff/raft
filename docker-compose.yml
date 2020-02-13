@@ -18,7 +18,7 @@ services:
       - app
     environment:
       - JVM_OPTS=-Xmx128m -Xms64m
-    command: --raft.election-timeout=10 --raft.id=1 --server.port=8081
+    command: --raft.election-timeout=5 --raft.id=1 --server.port=8081
   raft-server-2:
     image: pleshakoff/raft-server:1.0.0
     ports:
@@ -27,7 +27,7 @@ services:
       - app
     environment:
       - JVM_OPTS=-Xmx128m -Xms64m
-    command: --raft.election-timeout=15 --raft.id=2 --server.port=8082
+    command: --raft.election-timeout=7 --raft.id=2 --server.port=8082
   raft-server-3:
     image: pleshakoff/raft-server:1.0.0
     ports:
@@ -36,6 +36,6 @@ services:
       - app
     environment:
       - JVM_OPTS=-Xmx128m -Xms64m
-    command: --raft.election-timeout=30 --raft.id=3 --server.port=8083
+    command: --raft.election-timeout=9 --raft.id=3 --server.port=8083
 networks:
   app:
