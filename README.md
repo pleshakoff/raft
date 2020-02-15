@@ -93,7 +93,7 @@ https://github.com/pleshakoff/raft/tree/master/server
 #### Реализация 
 
 
-Пакеты
+Пакеты:
 
 * [node](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/node). 
 Метаданные узла. Терм, данные нодов соседей  и т.д.    
@@ -142,6 +142,15 @@ https://github.com/pleshakoff/raft/tree/master/client
 * Log. Просмотр лога 
 * Storage. CRUD для работы с БД.  
 
+#### Реализация 
+
+
+Пакеты
+
+* [exchange](https://github.com/pleshakoff/raft/tree/master/client/src/main/java/com/raft/client/exchange). 
+Сервис для получения метаданных серверных нод     
+
+Все остальное это просто редиректы к ендпоинтам серверных нод да чтения и записи данных.  
 
     
 
