@@ -52,7 +52,7 @@ https://github.com/pleshakoff/raft/tree/master/server
 операция применяюся state machine и данные попадают в БД. 
 После этого, факт того что операция применена, отправляется другим нодам и они применяют её на своей БД. 
 
-Сереверная нода обеспечивает обмен данными с другими нодами поддерживаются дватипа запросов: 
+Сереверная нода обеспечивает обмен данными с другими нодами поддерживаются два типа запросов: 
 * vote при проведении раунда голосования 
 * append он же heartbeat(если без данных) для репликации данных лога фоловерам и для предотвращения старта нового раунда голосования. 
 
@@ -96,10 +96,10 @@ https://github.com/pleshakoff/raft/tree/master/server
 Пакеты:
 
 * [node](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/node). 
-Метаданные узла. Терм, данные нодов соседей  и т.д.    
+Метаданные узла. Раунд голосования, индекс последней примененной операции, данные нодов соседей  и т.д.    
 * [election](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/election). 
 Таймер начала выборов. Сервис для отправки и обработки vote реквеста   
-* [replication](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/replication).  
+* [replication](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/replication). 
 Таймер heeartbeat. Сервис для отправки и обработки append реквеста.   
 * [operations](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/operations). 
 Интерфейс для доступа к  логу операций. Его in memory реализация. Сервис для операций с логом.     
@@ -197,7 +197,7 @@ GET запросы можно запускать прямо в браузере.
  
 `docker-compose logs -f raft-server-3` 
 
-Если есть желание видеть логи с более подробной информациеей то надо в docker-compose.yml
+Если есть желание видеть логи с более подробной информацией то надо в docker-compose.yml
 раскомментировать для тэга command параметр с профилем debug 
 
 `--spring.profiles.active=debug`   
@@ -216,7 +216,7 @@ GET запросы можно запускать прямо в браузере.
 
 Можно переключить лог в debug режим, подробнее см. [Get started](#get-started)
 
-При отключении узла CRUD недоступен. Но операция просмотра лога не блокируется, лог можно посмотреть. 
+При отключении узла через API, CRUD недоступен. Но операция просмотра лога не блокируется, лог можно посмотреть. 
 
 <a name="election"></a>
 ### Перевыборы 
@@ -291,11 +291,11 @@ http://localhost:8080/api/v1/storage?peerId=3
 Отключаем текущего лидера как описано в [перевыборы](#election). 
 Через клиентскую ноду данные добавить в отключенную ноду нельзя. 
 Поэтому подключаемся напрямую к серверной ноде которую мы отключили.   
-Например если лидером был 2 то http://localhost:8082/api/v1/swagger-ui.html (id = последняя цифра порта) 
+Например если лидером был 1 то http://localhost:8081/api/v1/swagger-ui.html (id = последняя цифра порта) 
 
 Используем специальный метод, который позволяет добавить данные в лог отключенной ноды 
 
-**POST** http://localhost:8082/api/v1/log/sneaky
+**POST** http://localhost:8081/api/v1/log/sneaky
 {
   "key": 1000,
   "val": "BAD DATA"
@@ -303,7 +303,7 @@ http://localhost:8080/api/v1/storage?peerId=3
 
 Обращаемся по прежнему к серверной ноде напрямую 
 
-Убеждаемся что данные попали в лог http://localhost:8082/api/v1/log
+Убеждаемся что данные попали в лог http://localhost:8081/api/v1/log
 
 Проверяем что эти данные не попали из лога в БД для данной ноды, потому что нет кворума http://localhost:8082/api/v1/storage
 
@@ -314,9 +314,9 @@ http://localhost:8080/api/v1/storage?peerId=3
 
 Поднимаем отключенного лидера проверяем его лог и хранилище, там должны быть правильные данные из кластера
  
-http://localhost:8082/api/v1/log
+http://localhost:8080/api/v1/log?peerId=1
 
-http://localhost:8082/api/v1/storage
+http://localhost:8080/api/v1/storage?peerId=1
 
 
  
