@@ -150,7 +150,7 @@ https://github.com/pleshakoff/raft/tree/master/client
 * [exchange](https://github.com/pleshakoff/raft/tree/master/client/src/main/java/com/raft/client/exchange). 
 Сервис для получения метаданных серверных нод     
 
-Все остальное это просто редиректы к ендпоинтам серверных нод да чтения и записи данных.  
+Все остальное это просто редиректы к ендпоинтам серверных нод для чтения и записи данных.  
 
     
 
