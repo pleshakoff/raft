@@ -90,6 +90,24 @@ https://github.com/pleshakoff/raft/tree/master/server
 * Replication. Эндпоинт для append/heartbeat запросов 
 * Election. Эндпоинт для vote запросов
 
+#### Реализация 
+
+
+Пакеты
+
+* [node](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/node). 
+Метаданные узла. Терм, данные нодов соседей  и т.д.    
+* [election](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/election). 
+Таймер начала выборов. Сервис для отправки и обработки vote реквеста   
+* [replication](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/replication).  
+Таймер heeartbeat. Сервис для отправки и обработки append реквеста.   
+* [operations](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/operations). 
+Интерфейс для доступа к  логу операций. Его in memory реализация. Сервис для операций с логом.     
+* [storage](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/storage). 
+Интерфейс для доступа к БД. Его in memory реализация. Сервис для операций с БД. 
+* [context](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/context). 
+Декоратор для удобного доступа к метаданным узла.  
+
   
 ### Клиент
 
@@ -124,23 +142,6 @@ https://github.com/pleshakoff/raft/tree/master/client
 * Log. Просмотр лога 
 * Storage. CRUD для работы с БД.  
 
-#### Реализация 
-
-
-Пакеты
-
-* [node](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/node). 
-Метаданные узла. Терм, данные нодов соседей  и т.д.    
-* [election](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/election). 
-Таймер начала выборов. Сервис для отправки и обработки vote реквеста   
-* [replication](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/replication).  
-Таймер heeartbeat. Сервис для отправки и обработки append реквеста.   
-* [operations](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/operations). 
-Интерфейс для доступа к  логу операций. Его in memory реализация. Сервис для операций с логом.     
-* [storage](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/storage). 
-Интерфейс для доступа к БД. Его in memory реализация. Сервис для операций с БД. 
-* [context](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/context). 
-Декоратор для удобного доступа к метаданным узла.  
 
     
 
