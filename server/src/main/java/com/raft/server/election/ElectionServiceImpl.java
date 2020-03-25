@@ -33,47 +33,53 @@ class ElectionServiceImpl implements ElectionService {
     private final OperationsLog operationsLog;
 
 
-    private CompletableFuture<AnswerVoteDTO> getVoteFromOnePeer(Integer id,Long term) {
+    private CompletableFuture<AnswerVoteDTO> getVoteFromOnePeer(Integer id,
+                                                                Long term) {
         return CompletableFuture.supplyAsync(() -> {
             if (!checkCurrentElectionStatus(term))
                 return new AnswerVoteDTO(id, NO_CONTENT);
             try {
                 log.info("Peer #{} Send vote request to {}", context.getId(), id);
 
-                RequestVoteDTO requestVoteDTO = new RequestVoteDTO(term,context.getId(),
+                RequestVoteDTO requestVoteDTO = new RequestVoteDTO(term, context.getId(),
                                                                    operationsLog.getLastIndex(),
                                                                    operationsLog.getLastTerm());
-                ResponseEntity<AnswerVoteDTO> response = http.callPost(id.toString(), AnswerVoteDTO.class, requestVoteDTO,"election", "vote");
+                ResponseEntity<AnswerVoteDTO> response = http.callPost(id.toString(), AnswerVoteDTO.class,
+                                                                       requestVoteDTO, "election", "vote");
 
                 return Optional.ofNullable(response.getBody()).
                         orElse(new AnswerVoteDTO(id, NO_CONTENT));
             } catch (HttpException e) {
-                log.error("Peer #{} Vote request error for {}. Response status code {}", context.getId(), id, e.getStatusCode());
+                log.error("Peer #{} Vote request error for {}. Response status code {}", context.getId(), id,
+                          e.getStatusCode());
                 return new AnswerVoteDTO(id, e.getStatusCode());
             } catch (ResourceAccessException e) {
-                log.error("Peer #{} Vote request error for {}. {} {} ", context.getId(), id,  e.getClass(), e.getMessage());
+                log.error("Peer #{} Vote request error for {}. {} {} ", context.getId(), id, e.getClass(),
+                          e.getMessage());
                 return new AnswerVoteDTO(id, SERVICE_UNAVAILABLE);
-            }
-            catch (Exception e) {
-                log.error("Peer #{} Vote request error for {}. {} {} ", context.getId(), id,  e.getClass(), e.getMessage());
+            } catch (Exception e) {
+                log.error("Peer #{} Vote request error for {}. {} {} ", context.getId(), id, e.getClass(),
+                          e.getMessage());
                 return new AnswerVoteDTO(id, INTERNAL_SERVER_ERROR);
             }
 
         });
     }
 
-    private List<AnswerVoteDTO> getVoteFromAllPeers(Long term, List<Integer> peers) {
-        log.debug("Peer #{} Forward vote request to peers. Term {}. Peers count: {}", context.getId(), term, peers.size());
+    private List<AnswerVoteDTO> getVoteFromAllPeers(Long term,
+                                                    List<Integer> peers) {
+        log.debug("Peer #{} Forward vote request to peers. Term {}. Peers count: {}", context.getId(), term,
+                  peers.size());
         List<CompletableFuture<AnswerVoteDTO>> answerFutureList =
                 peers.stream()
-                        .map(i -> getVoteFromOnePeer(i,term))
+                        .map(i -> getVoteFromOnePeer(i, term))
                         .collect(Collectors.toList());
 
         if (checkCurrentElectionStatus(term)) {
             return CompletableFuture.allOf(
                     answerFutureList.toArray(new CompletableFuture[0])
             ).thenApply(v ->
-                    answerFutureList.stream().map(CompletableFuture::join).collect(Collectors.toList())
+                                answerFutureList.stream().map(CompletableFuture::join).collect(Collectors.toList())
             ).join();
         } else
             return new ArrayList<>();
@@ -103,21 +109,21 @@ class ElectionServiceImpl implements ElectionService {
             peersIds = new ArrayList<>();
             for (AnswerVoteDTO answer : answers) {
                 if (answer.getStatusCode().equals(OK)) {
-                    if (answer.getTerm()>context.getCurrentTerm()) {
+                    if (answer.getTerm() > context.getCurrentTerm()) {
                         //• If RPC request or response contains term T > currentTerm: set currentTerm = T, convert to follower (§5.1)
                         context.setTermGreaterThenCurrent(answer.getTerm());
                         return;
                     }
                     if (answer.isVoteGranted()) {
-                        log.info("Peer #{} Vote granted from {}", context.getId(),answer.getId());
+                        log.info("Peer #{} Vote granted from {}", context.getId(), answer.getId());
                         context.getPeer(answer.getId()).setVoteGranted(true);
                         voteGrantedCount++;
                     } else
-                        log.info("Peer #{} Vote revoked from {}", context.getId(),answer.getId());
-                        voteRevokedCount++;
+                        log.info("Peer #{} Vote revoked from {}", context.getId(), answer.getId());
+                    voteRevokedCount++;
                 } else {
-                    log.info("Peer #{} No vote answer from {}", context.getId(),answer.getId());
-                   peersIds.add(answer.getId());
+                    log.info("Peer #{} No vote answer from {}", context.getId(), answer.getId());
+                    peersIds.add(answer.getId());
                 }
             }
             if (voteGrantedCount >= context.getQuorum()) {
@@ -136,7 +142,7 @@ class ElectionServiceImpl implements ElectionService {
             log.info("Peer #{} Preparing to retry vote request", context.getId());
             Thread.sleep(VOTE_RETRY_DELAY);
         } catch (InterruptedException e) {
-            log.error(e.getMessage(),e);
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -145,24 +151,25 @@ class ElectionServiceImpl implements ElectionService {
     }
 
     private void winElection(Long term) {
-        if (checkCurrentElectionStatus(term))
+        if (checkCurrentElectionStatus(term)) {
             log.info("Peer #{} I have WON the election! :)", context.getId());
-        context.setState(LEADER);
-
+            context.setState(LEADER);
 
 //        for each server, index of the next operations entry  to send to that server
 //        (initialized to leader last operations index + 1)
-          context.getPeers().forEach(peer ->
-                peer.setNextIndex(operationsLog.getLastIndex()+1)
+            context.getPeers().forEach(peer ->
+                                               peer.setNextIndex(operationsLog.getLastIndex() + 1)
 
-        );
+            );
+        }
 
     }
 
     private void loseElection(Long term) {
-        if (checkCurrentElectionStatus(term))
+        if (checkCurrentElectionStatus(term)) {
             log.info("Peer #{} I have LOSE the election! :(", context.getId());
-        context.setState(FOLLOWER);
+            context.setState(FOLLOWER);
+        }
 
     }
 
@@ -171,10 +178,10 @@ class ElectionServiceImpl implements ElectionService {
     public AnswerVoteDTO vote(RequestVoteDTO dto) {
         context.cancelIfNotActive();
         log.info("Peer #{} Get vote request from {} with term {}. Current term: {}. Voted for: {}", context.getId(),
-                dto.getCandidateId(),
-                dto.getTerm(),
-                context.getCurrentTerm(),
-                context.getVotedFor());
+                 dto.getCandidateId(),
+                 dto.getTerm(),
+                 context.getCurrentTerm(),
+                 context.getVotedFor());
 
 
 //        1. Reply false if term < currentTerm (§5.1)
@@ -183,16 +190,13 @@ class ElectionServiceImpl implements ElectionService {
 
         boolean termCheck;
         if (dto.getTerm() < context.getCurrentTerm())
-            return new AnswerVoteDTO(context.getId(),context.getCurrentTerm(),false);
-        else
-        if (dto.getTerm().equals(context.getCurrentTerm())) {
-            termCheck = (context.getVotedFor() == null||context.getVotedFor().equals(dto.getCandidateId()));
-        }
-        else
-        {
+            return new AnswerVoteDTO(context.getId(), context.getCurrentTerm(), false);
+        else if (dto.getTerm().equals(context.getCurrentTerm())) {
+            termCheck = (context.getVotedFor() == null || context.getVotedFor().equals(dto.getCandidateId()));
+        } else {
             //• If RPC request or response contains term T > currentTerm: set currentTerm = T, convert to follower (§5.1)
             termCheck = true;
-              context.setTermGreaterThenCurrent(dto.getTerm());
+            context.setTermGreaterThenCurrent(dto.getTerm());
         }
 
         boolean logCheck = !((operationsLog.getLastTerm() > dto.getLastLogTerm()) ||
@@ -200,20 +204,18 @@ class ElectionServiceImpl implements ElectionService {
                         (operationsLog.getLastIndex() > dto.getLastLogIndex())));
 
 
-        boolean voteGranted = termCheck&&logCheck;
+        boolean voteGranted = termCheck && logCheck;
 
         if (voteGranted) {
             context.setVotedFor(dto.getCandidateId());
-            log.info("Peer #{} Give vote for {}", context.getId(),dto.getCandidateId() );
+            log.info("Peer #{} Give vote for {}", context.getId(), dto.getCandidateId());
+        } else {
+            log.info("Peer #{} Reject vote for {} Current term {}, Candidate term {} ", context.getId(),
+                     dto.getCandidateId(),
+                     context.getCurrentTerm(), dto.getTerm());
         }
-        else {
-            log.info("Peer #{} Reject vote for {} Current term {}, Candidate term {} ", context.getId(),dto.getCandidateId(),
-                    context.getCurrentTerm(),dto.getTerm());
-        }
-        return new AnswerVoteDTO(context.getId(),context.getCurrentTerm(),voteGranted);
+        return new AnswerVoteDTO(context.getId(), context.getCurrentTerm(), voteGranted);
     }
-
-
 
 
 }
