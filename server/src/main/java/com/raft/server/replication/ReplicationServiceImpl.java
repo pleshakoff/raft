@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.raft.server.node.State.FOLLOWER;
@@ -153,11 +154,17 @@ class ReplicationServiceImpl implements ReplicationService {
                   context.getCommitIndex());
         while (true) {
             int N = context.getCommitIndex() + 1;
-            long count = context.getPeers().stream().map(Peer::getMatchIndex).
-                    filter(matchIndex -> matchIndex >= N).count() + 1;//followers plus me
-            if (count >= context.getQuorum() &&
-                    operationsLog.getLastIndex() >= N &&
-                    operationsLog.getTerm(N).equals(context.getCurrentTerm())) {
+
+            Supplier<Long> count = () ->
+                context.getPeers().stream().map(Peer::getMatchIndex).
+                        filter(matchIndex -> matchIndex >= N).count() + 1;
+
+
+            if (operationsLog.getLastIndex() >= N &&
+                    operationsLog.getTerm(N).equals(context.getCurrentTerm())&&
+                       count.get()>=context.getQuorum()
+            )
+            {
                 context.setCommitIndex(N);
             } else
                 return;
