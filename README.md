@@ -9,6 +9,8 @@
 <a name="desc"></a>
 ## Описание системы. 
 
+Моя статья на хабре по этой теме https://habr.com/ru/company/otus/blog/495356/
+
 ![alt text](https://github.com/pleshakoff/raft/blob/master/RAFT.png?raw=true"")
 
 Распределенная CP система для хранения данных в формата KEY-VALUE.
