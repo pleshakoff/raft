@@ -108,7 +108,7 @@ https://github.com/pleshakoff/raft/tree/master/server
 * [storage](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/storage). 
 Интерфейс для доступа к БД. Его in memory реализация. Сервис для операций с БД. 
 * [context](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/context). 
-Декоратор для удобного доступа к метаданным узла.  
+Фасад для удобного доступа к метаданным узла.  
 
   
 ### Клиент
