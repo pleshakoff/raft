@@ -1,197 +1,193 @@
 # RAFT
-## Реализация консенсус-алгоритма RAFT для распределенного K-V хранилища 
+## Raft Consensus Algorithm implementation for K-V storage 
 
-1. [Описание системы](#desc)
+1. [Description](#desc)
 2. [Get started](#get-started)
-3. [Примеры](#examples)
+3. [Examples](#examples)
 
 
 <a name="desc"></a>
-## Описание системы. 
+## Description.
+[Russian version](https://github.com/pleshakoff/raft/blob/master/README_RUS.md).
 
-Моя статья на хабре по этой теме https://habr.com/ru/company/otus/blog/495356/
+
+My article in the Habr magazine (in russian): https://habr.com/ru/company/otus/blog/495356/
 
 ![alt text](https://github.com/pleshakoff/raft/blob/master/RAFT.png?raw=true"")
 
-Распределенная CP система для хранения данных в формата KEY-VALUE.
-Для репликации данных и поддержания консистентонсти используется консенсус-алгоритм RAFT.
-Реализация RAFT написана на Java+Spring Boot.
-В текущем документе сам алгоритм не описывается, о нем можно почитать в спецификации https://raft.github.io/raft.pdf
+Distributed (Consistency + Partition tolerance) system for key-value data storage.
+
+The RAFT consensus algorithm has been designed for data replication and data consistency maintainance.
+The algorithm itself is not described in the current document; you can read about it in the specification: https://raft.github.io/raft.pdf
+
+My RAFT model is implemented on Java+Spring Boot.
  
-Система состоит из двух модулей, для двух типов нод: клиент и сервер. 
-Можно развернуть неограниченное количество инстансов как сервера так и клиента.
-В текущей конфигурации настроены 3 ноды (для простоты эмуляции нешататных ситуаций) и 1 клиент,  
+The system consists of two modules for two types of nodes: client and server.
+You can deploy an unlimited number of instances for the server and the client.
+In the current configuration, you can run three server-nodes (to simplify problems’ emulation) and one client-node. 
 
-
-### Сервер
+### Server
 
 https://github.com/pleshakoff/raft/tree/master/server
 
-Доступны три ноды. Идентификаторы нод: 1,2,3.
+There are three nodes with the IDs: 1,2,3.
 
-С API можно работать через swagger(подробенее в разделе [API](#api))
+You can use Swagger for work with API (described in [API](#api))
 
-#### Описание 
+#### Description 
 
-Серверная нода может работать в трех состояниях:   
-* Follower. Принимет запросы на чтение от клиента. Принимает heartbeat от лидера  
-* Candidate. Принимает запросы на чтение от клиента. Рассылает vote запросы другим нодам 
-* Leader. Принимает запросы на чтение и на запись. Рассылает heartbeat запросы другим нодам. 
-Рассылает append запросы c данными другим нодам.
+A server node has three states:
+* Follower. Accepts read requests from the client. Takes a heartbeat from the leader.
+* Candidate. Accepts read requests from the client. Sends vote requests to other nodes.
+* Leader. Accepts read and write requests. Sends heartbeat requests to other nodes.
+Sends data append requests to other nodes.
 
-Каждая серверная нода обеспечивает доступ к хранилищу лога операций, 
-в котором последовательно фиксируются операции по изменению данных. 
+Each server node provides access to the transaction log storage.
+The log storage contains sequentially recorded data changing operations.
+
+Also, each server node has access to the database with the data records.
   
-Также каждая серверная нода имеет доступ к БД в которой хранятся непосредственно данные. 
+Each node has its own database and log.
 
-БД и лог у каждой ноды свои отдельные. 
+The current implementation uses embedded in-memory solutions for both the log and the database.
+(Concurrent Map and List)
+If necessary, you can implement the interfaces to support other types of storage.
 
-В текущей реализации используются embedded in-memory решения как для лога, так и для БД.
-(конкурентные List и Map) 
-В случае необходимости можно просто имплементировать соответствующий интерфейс для поддержки иных типов хранилищ.
+Log data (operations) is sent by the leader to other nodes. 
+After confirmation of the operation received by the majority of nodes, the operation is applied by the state machine, and the data is put into the database.
+After the information from the operation is applied by the leader, than it is sent to other nodes, and they apply it onto their databases.
+The server node provides data exchange with other nodes. Two types of requests are supported.
+* Vote. Used in a process of a voting round.   
+* Append, aka heartbeat (empty data). Used to replicate the log data to followers and prevent the start of a new round of voting.
 
-Данные лога(операции) реплицируются лидером остальным нодам. После подтверждения получения операции большинством нод, 
-операция применяюся state machine и данные попадают в БД. 
-После этого, факт того что операция применена, отправляется другим нодам и они применяют её на своей БД. 
+There are two types of timers running on the server:
+* Vote. Used to start a voting round. Restarts when a heartbeat is received from the server.
+Timeout configured separately for each server. In the current configuration: 5 seconds, 7 seconds, 9 seconds
+* Heartbeat. Used to send the append-request to followers. In the current configuration the timeout is 2 seconds.
 
-Сереверная нода обеспечивает обмен данными с другими нодами поддерживаются два типа запросов: 
-* vote при проведении раунда голосования 
-* append он же heartbeat(если без данных) для репликации данных лога фоловерам и для предотвращения старта нового раунда голосования. 
+If a node does not receive a heartbeat and the voting timer has expired, the node becomes a candidate and
+initiates elections, increments the voting round number, and sends vote requests to other nodes.
+If the node gains the most votes, then it becomes the leader and starts sending heartbeats.
 
-На сервере запущены два вида таймеров: 
-* vote. Для запуска раунда голосовании. Сбрасывается при получении heartbeat от сервера. 
-Настраивается отдельно для каждого сервера. В текущей конфигурации (5 секунд, 7 секунд, 9 секунд)     
-* heartbeat. Для отправки append запроса фоловерам. В текущией конфигурации таймаут 2 секунды.
-
-Если сервер не получает heartbeat и таймер голосования истек, он становится кандидатом и 
-инициирует выборы, повышает номер раунда голосования и рассылает vote запросы другим нодам.
-Если нода соберет большинство голосов, то она становится лидером и начинает рассылать heartbeat.
- 
-Для того чтобы можно было эмулировать отключения нод без опускания контейнеров, есть возможность через API
-останавливать ноды. После остановки нода молчит, она недоступна для других нод и для записи клиентом.  
-Но есть возможность получить содержимое лога и БД, что очень удобно для исследований поведения кластера 
-в нешататной ситуации. Так же есть backdoor для вставки данных в лог, что полезно для эмуляции ситуации
-когда лидер не знает что он отрезан от кластера и продолжает принимать данные. Подробнее в    
-[примерах](#examples)  
-
-      
+It is possible to use API to stop nodes to emulate the node shutdown without a containers shutdown.    
+If the node is stopped, it does not send any requests, and it is not available to other nodes nor for the client.
+However, it is possible to make a request to the log and database, which is very convenient for studying the behavior of the cluster 
+in an emergency situation. There is also a backdoor for inserting data into the log, which is useful for emulating the situation
+when the leader does not know that he is disconnected from the cluster yet continues to receive data. 
+Read more in [examples](#examples)  
+     
+     
 <a name="api"></a>            
 #### API 
 
-Нода #1:  http://localhost:8081/api/v1/swagger-ui.html
+Node #1:  http://localhost:8081/api/v1/Swagger-ui.html
 
-Нода #2:  http://localhost:8082/api/v1/swagger-ui.html
+Node #2:  http://localhost:8082/api/v1/Swagger-ui.html
 
-Нода #3:  http://localhost:8083/api/v1/swagger-ui.html
+Node #3:  http://localhost:8083/api/v1/Swagger-ui.html
    
-В API доступны следующее группы методов 
+The following groups of methods are available in the API: 
 
-* Context. Получение метаданных ноды. Остановка/запуск ноды 
-* Log. CRUD для лога.   
-* Storage. Чтение данных из БД. 
-* Replication. Эндпоинт для append/heartbeat запросов 
-* Election. Эндпоинт для vote запросов
+* Context. Gets node metadata. Stop/Start node 
+* Log. CRUD for the log.   
+* Storage. Reads data from the database.
+* Replication. Endpoint for the append/heartbeat requests
+* Election. Endpoint for vote requests
 
-#### Реализация 
+#### Implementation
 
 
-Пакеты:
+Packages:
 
 * [node](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/node). 
-Метаданные узла. Раунд голосования, индекс последней примененной операции, данные нодов соседей  и т.д.    
+Node metadata. Voting round, last applied operation index, other nodes data, etc. 
 * [election](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/election). 
-Таймер начала выборов. Сервис для отправки и обработки vote реквеста   
+Voting timer. Service for sending and processing vote requests.  
 * [replication](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/replication). 
-Таймер heeartbeat. Сервис для отправки и обработки append реквеста.   
+Heartbeat timer. Service for sending and processing append requests.  
 * [operations](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/operations). 
-Интерфейс для доступа к  логу операций. Его in memory реализация. Сервис для операций с логом.     
+Interface for accessing the operation log. Log in memory implementation. Service for log operations.  
 * [storage](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/storage). 
-Интерфейс для доступа к БД. Его in memory реализация. Сервис для операций с БД. 
+Interface for accessing the database. Database in memory implementation. Service for database operations.
 * [context](https://github.com/pleshakoff/raft/tree/master/server/src/main/java/com/raft/server/context). 
-Фасад для удобного доступа к метаданным узла.  
+Facade for easy access to node metadata. 
 
   
-### Клиент
+### Client
 
 https://github.com/pleshakoff/raft/tree/master/client
 
-В текущей конфигурации запускается в единственном экземпляре. 
-С API можно работать через swagger(подробенее в разделе [API](#apiclient))
+In the current configuration, the client starts as a single instance.
+You can use Swagger (for more details, see the [API](#apiclient) section)
 
-#### Описание 
+#### Description 
 
-Отправляет запросы серверу. 
-Может собрать метаданные со всего кластера и показать доступные ноды и их состояния 
+The client sends requests to the server.
+The client can collect metadata from the entire cluster and show available nodes and their states.
 
-При запросе на запись ищет лидера и переправляет запрос ему.
-Читать можно с лобой ноды. 
-В текущей реализации клиент не умеет сам решать с какой ноды запросить данные, 
-это надо указать в параметре запроса, так сделано специально 
-чтобы удобно было исследовать поведение разных нод.
+The client discovers the leader node and redirects the write request to it. 
+The client can read data from any node.
+In the current implementation, the client does not use a balancing algorithm to select an available node for a read request. 
+The main goal is to provide an opportunity to test behavior of different nodes.    
 
-В текущей реализации клиент при запросе на запись данных не дожидается подтверждения большинством нод, 
-как того требует спецификация.
-Он просто отправляет запрос асинхронно, а результат уже может быть проверен при попытке чтения.        
+In the current implementation, the client does not wait for confirmation from most nodes,
+as required by the specification. It just sends the request asynchronously.
       
 <a name="apiclient"></a>            
 #### API 
 
-Клиент:  http://localhost:8080/api/v1/swagger-ui.html
+Client:  http://localhost:8080/api/v1/Swagger-ui.html
    
-В API доступны следующее группы методов 
+The following groups of methods are available in the API: 
 
-* Context. Получение метаданных с всего кластера. Остановка/запуск нод. Получения id лидера.  
-* Log. Просмотр лога 
-* Storage. CRUD для работы с БД.  
+* Context. Getting the metadata of the entire cluster. Stop/start nodes. Get leader id. 
+* Log. View the log.
+* Storage. CRUD for working with the database.  
 
-#### Реализация 
+#### Implementation 
 
 
-Пакеты
+Packages
 
 * [exchange](https://github.com/pleshakoff/raft/tree/master/client/src/main/java/com/raft/client/exchange). 
-Сервис для получения метаданных серверных нод     
+Service for getting server node metadata   
 
-Все остальное это просто редиректы к ендпоинтам серверных нод для чтения и записи данных.  
-
-    
-
+API for redirecting requests to nodes.   
 
 <a name="get-started"></a>
 ## Get started 
 
-В корне репозитория лежит [docker-compose.yml](https://github.com/pleshakoff/raft/blob/master/docker-compose.yml)
-его надо запустить, поднимются три серверных ноды и клиент.
-
+There is [docker-compose.yml](https://github.com/pleshakoff/raft/blob/master/docker-compose.yml) at the root of the repository. 
+It must be launched, after launch, three server nodes and a client will be activated.
 ` docker-compose up`
- 
-После запуска через 5 секунд ноды выберут лидера и кластер будет готов к работе. 
+
+After starting, the nodes will choose a leader, and in 5 seconds the cluster will be ready to work.
 
 ##### Swagger 
 
-Нода #1:  http://localhost:8081/api/v1/swagger-ui.html
+Node #1:  http://localhost:8081/api/v1/Swagger-ui.html
 
-Нода #2:  http://localhost:8082/api/v1/swagger-ui.html
+Node #2:  http://localhost:8082/api/v1/Swagger-ui.html
 
-Нода #3:  http://localhost:8083/api/v1/swagger-ui.html
+Node #3:  http://localhost:8083/api/v1/Swagger-ui.html
 
-Клиент:  http://localhost:8080/api/v1/swagger-ui.html
+Client:  http://localhost:8080/api/v1/Swagger-ui.html
 
-GET запросы можно запускать прямо в браузере. 
-Например получить состяние нод можно по ссылке: http://localhost:8080/api/v1/context
+GET requests can be made directly from the browser.
+For example, you can get the state of the nodes at the link: http://localhost:8080/api/v1/context
 
 ##### Vote timeout 
 
-Нода #1:  5 секунд 
+Node #1:  5 seconds 
 
-Нода #2:  7 секунд
+Node #2:  7 seconds
 
-Нода #3:  9 секунд
+Node #3:  9 seconds
 
-Таймауты можно перенастроить в docker-compose.yml
+You can configure  timeouts in the docker-compose.yml
 
 
-##### Логи 
+##### Logs 
 
 `docker-compose logs -f raft-server-1 `
 
@@ -199,62 +195,60 @@ GET запросы можно запускать прямо в браузере.
  
 `docker-compose logs -f raft-server-3` 
 
-Если есть желание видеть логи с более подробной информацией то надо в docker-compose.yml
-раскомментировать для тэга command параметр с профилем debug 
+If you want to see more detail, just uncomment the debug profile setting for "command" tag in the docker-compose.yml file
 
 `--spring.profiles.active=debug`   
 
-Пример: 
+Example: 
 `command: --raft.election-timeout=5 --raft.id=1 --server.port=8081 --spring.profiles.active=debug
 `
 
 <a name="examples"></a>
-## Примеры
+## Examples
 
-Ниже рассмотрен ряд примеров работы с кластером  
+Here you can find test scenarios for the cluster.  
 
-Все примеры нужно выполнять через swagger клиентской ноды.
-Все то же самое можно сделать обращаясь непосредстваенно к серверным  нодам, но через клиента удобнее.   
+All examples must be executed by the Swagger in the client node.
+All the same tasks can be completed by calling the server nodes directly, but it is more convenient to do this by client. 
 
-Можно переключить лог в debug режим, подробнее см. [Get started](#get-started)
-
-При отключении узла через API, CRUD недоступен. Но операция просмотра лога не блокируется, лог можно посмотреть. 
+When a node is disabled via the API, CRUD is not available, but the operation of viewing the log is not blocked,.
 
 <a name="election"></a>
-### Перевыборы 
+### Election 
 
-Проверяем как поведет себя кластер при потере лидера 
+We can check how the cluster behaves when the leader is lost.
 
-Получаеем ID лидера http://localhost:8080/api/v1/context/leader
+Get the leader ID: http://localhost:8080/api/v1/context/leader
 
-Например он равен 1 
+For example, the ID is equal to 1.
 
-Через swagger отключаем лидера от кластера.
+Disconnect the leader from the cluster.
    
-**POST** http://localhost:8080/api/v1/context/stop?peerId=1 
+**POST** http://localhost:8080/api/v1/context/stop?peerId=1
 
-Получаем данные всего кластера http://localhost:8080/api/v1/context
+Get the data of the entire cluster http://localhost:8080/api/v1/context
 
-Видим что новый лидер выбран, а старый лидер по прежнему лидер, но он отключен (active: false)
+We see that the new leader was selected, and the old leader is still the leader, but it is disabled (active: false)
 
-Отключаем следующего лидера **POST** http://localhost:8080/api/v1/context/stop?peerId=2  
+Disable the next leader **POST** http://localhost:8080/api/v1/context/stop?peerId=2
 
-При поптке получить теперь ID лидера терпим неудачу, в кластере нет кворума http://localhost:8080/api/v1/context/leader 
+Attempts to get the leader ID failed, because there is no quorum in the cluster http://localhost:8080/api/v1/context/leader
 
-Подключаем узлы, смотрим кто победил. 
+Restore the nodes, and observe who won.
 
 **POST** http://localhost:8080/api/v1/context/start?peerId=1
 
 **POST** http://localhost:8080/api/v1/context/start?peerId=2
 
 <a name="normal"></a>
-### Штатная репликация  
+### Regular replication 
 
-Проверяем репликацию  
+Checking replication 
 
-Вставляем,удаляем,редактируем данные через ендопоинты группы storage
 
-Например
+Insert, delete, edit data by using storage API 
+
+For example: 
 **POST** "http://localhost:8080/api/v1/storage 
 
 `{
@@ -262,19 +256,18 @@ GET запросы можно запускать прямо в браузере.
   "val": "test data"
 }
 `
-
-Читаем данные из БД из разных узлов. 
-Например для второго: http://localhost:8080/api/v1/storage?peerId=2 
+We read data from the database from different nodes.
+For example for the second node: http://localhost:8080/api/v1/storage?peerId=2
  
-### Отстающие узлы  
+### Missed nodes   
 
-Добавляем данные как описано в  пункте [штатная репликация](#normal)
+Add data as described in the paragraph [Regular replication](#normal)
 
-Потом отключаем узлы от кластера как описано в [перевыборы](#election) 
+Then stop the nodes as described in [election](#election) 
  
-Добавляем данные, включаем/отключаем узлы. Желательно в разном порядке. 
+Add data, start/stop nodes.
 
-Проверяем что все узлы синхронизировались.
+Then check that all the nodes have been synchronized.
 
 http://localhost:8080/api/v1/storage?peerId=1
      
@@ -283,19 +276,19 @@ http://localhost:8080/api/v1/storage?peerId=2
 http://localhost:8080/api/v1/storage?peerId=3     
 
 
-### Конфликт лидеров 
+### Leaders conflict
 
-Эмулируем ситуацию когда лидер отключился от кластера и по прежнему считает что он лидер и продолжает принимать данные.
-В это время кластер выбрал нового лидера и тоже продолжает принимать данные. 
+We reproduce the situation when the leader disconnects from the cluster and still considers himself the leader and continues to receive data.
+At this time, the cluster has chosen a new leader, and also continues to receive data.
 
-Сначала надо отключить лидера и добавть данные в его лог.  
+First, you need to disable the leader and add data to its log.
 
-Отключаем текущего лидера как описано в [перевыборы](#election). 
-Через клиентскую ноду данные добавить в отключенную ноду нельзя. 
-Поэтому подключаемся напрямую к серверной ноде которую мы отключили.   
-Например если лидером был 1 то http://localhost:8081/api/v1/swagger-ui.html (id = последняя цифра порта) 
+Disable the current leader as described in [election](#election).
+Since we cannot add data to a disabled node through a client node,
+we connect directly to the server node that we have disabled.
+For example, if the leader is 1 then, http://localhost:8081/api/v1/Swagger-ui.html (id = last digit of the port)
 
-Используем специальный метод, который позволяет добавить данные в лог отключенной ноды 
+You can also use a special method that allows you to add data to the log of a disabled node.
 
 **POST** http://localhost:8081/api/v1/log/sneaky
 {
@@ -303,29 +296,20 @@ http://localhost:8080/api/v1/storage?peerId=3
   "val": "BAD DATA"
 }   
 
-Обращаемся по прежнему к серверной ноде напрямую 
 
-Убеждаемся что данные попали в лог http://localhost:8081/api/v1/log
+Continue to address the server node directly
 
-Проверяем что эти данные не попали из лога в БД для данной ноды, потому что нет кворума http://localhost:8081/api/v1/storage
+Make sure that the data is in the log: http://localhost:8081/api/v1/log
 
-Теперь добавляем данные в кластер через доступного лидера. На этот раз штатно через клиентскую ноду, как описано в пункте [штатная репликация](#normal)
+Check that this data did not get from the log to the database for this node, because there is no quorum: http://localhost:8081/api/v1/storage
 
-Таким образом мы получили два лидера оба с данными, у одного данные реплицированы и подтверждены большинством, 
-у второго нет. 
+Now we add data to the cluster through the available leader. This time, through the client node, as described in [regular replication](#normal)
 
-Поднимаем отключенного лидера проверяем его лог и хранилище, там должны быть правильные данные из кластера
+Thus, we have two leaders, both with data; one has data replicated and confirmed by the majority,
+the second one does not.
+
+Start the disconnected leader and check its log and storage. There should be correct data from the cluster:
  
 http://localhost:8080/api/v1/log?peerId=1
 
 http://localhost:8080/api/v1/storage?peerId=1
-
-
- 
-
-
-
-
-  
- 
- 
